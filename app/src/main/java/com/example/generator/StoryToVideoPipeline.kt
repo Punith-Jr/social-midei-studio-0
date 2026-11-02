@@ -41,7 +41,31 @@ enum class StoryDurationPreset(val seconds: Int, val labelEn: String, val labelK
 enum class StoryVideoFormat(val id: String, val label: String, val aspectWidth: Int, val aspectHeight: Int) {
     PORTRAIT_9_16("9:16", "9:16 Shorts/Reels", 9, 16),
     LANDSCAPE_16_9("16:9", "16:9 YouTube", 16, 9),
-    SQUARE_1_1("1:1", "1:1 Square Feed", 1, 1)
+    SQUARE_1_1("1:1", "1:1 Square Feed", 1, 1),
+    FEED_4_5("4:5", "4:5 Portrait Feed", 4, 5)
+}
+
+enum class VideoCreationCategory(
+    val id: String,
+    val titleEn: String,
+    val titleKn: String,
+    val descriptionEn: String,
+    val descriptionKn: String,
+    val defaultAspect: StoryVideoFormat,
+    val defaultDurationSec: Int,
+    val iconEmoji: String,
+    val dominantColorHex: Long
+) {
+    MANGA_STORY("manga", "Manga Story to Video", "ಮಂಗಾ ಸ್ಟೋರಿ ಟು ವೀಡಿಯೊ", "Chapters, panels, Ken Burns motion, character voice & comic effects", "ಅಧ್ಯಾಯಗಳು, ಪ್ಯಾನಲ್‌ಗಳು, ಕೆನ್ ಬರ್ನ್ಸ್ ಚಲನೆ, ಪಾತ್ರದ ಧ್ವನಿ & ಕಾಮಿಕ್ ಪರಿಣಾಮಗಳು", StoryVideoFormat.LANDSCAPE_16_9, 60, "📖", 0xFFE11D48),
+    YOUTUBE_LONG("youtube_long", "YouTube Long Video", "ಯೂಟ್ಯೂಬ್ ಲಾಂಗ್ ವೀಡಿಯೊ", "16:9 Long-form, 7-part retention structure, SEO & thumbnail", "16:9 ದೀರ್ಘ ಸ್ಕ್ರಿಪ್ಟ್, 7-ಹಂತದ ರಚನೆ, SEO & ಥಂಬ್‌ನೇಲ್", StoryVideoFormat.LANDSCAPE_16_9, 120, "🔴", 0xFFDC2626),
+    FACEBOOK_VIDEO("facebook", "Facebook Video", "ಫೇಸ್‌ಬುಕ್ ವೀಡಿಯೊ", "Story-based, promotional & educational in 1:1, 4:5 or 16:9", "ಕಥೆ, ಪ್ರಚಾರ & ಶೈಕ್ಷಣಿಕ ವೀಡಿಯೊಗಳು 1:1, 4:5 ಅಥವಾ 16:9", StoryVideoFormat.SQUARE_1_1, 60, "🔵", 0xFF1877F2),
+    INSTAGRAM_VIDEO("instagram", "Instagram Video", "ಇನ್‌ಸ್ಟಾಗ್ರಾಮ್ ವೀಡಿಯೊ", "Reels, stories, promotional product videos & carousel slideshow", "ರೀಲ್ಸ್, ಸ್ಟೋರಿಗಳು, ಉತ್ಪನ್ನ ಪ್ರಚಾರ & ಕ್ಯಾರೋಸೆಲ್ ಸ್ಲೈಡ್‌ಶೋ", StoryVideoFormat.PORTRAIT_9_16, 30, "🟣", 0xFFC13584),
+    YOUTUBE_SHORTS("shorts", "YouTube Shorts", "ಯೂಟ್ಯೂಬ್ ಶಾರ್ಟ್ಸ್", "15-60s vertical scripts, 1-3s viral hook & mobile safe areas", "15-60ಸೆ ಲಂಬ ಸ್ಕ್ರಿಪ್ಟ್‌ಗಳು, 1-3ಸೆ ವೈರಲ್ ಹುಕ್ & ಸುರಕ್ಷಿತ ವಲಯ", StoryVideoFormat.PORTRAIT_9_16, 30, "⚡", 0xFF06B6D4),
+    INSTAGRAM_REELS("reels", "Instagram Reels", "ಇನ್‌ಸ್ಟಾಗ್ರಾಮ್ ರೀಲ್ಸ್", "Trending concepts, dynamic pacing, animated text & 9:16 export", "ಟ್ರೆಂಡಿಂಗ್ ಕಾನ್ಸೆಪ್ಟ್, ವೇಗದ ಪೇಸಿಂಗ್, ಅನಿಮೇಟೆಡ್ ಟೆಕ್ಸ್ಟ್ & 9:16", StoryVideoFormat.PORTRAIT_9_16, 30, "📱", 0xFFE1306C),
+    AI_CINEMATIC("cinematic", "AI Cinematic Video", "AI ಸಿನೆಮ್ಯಾಟಿಕ್ ವೀಡಿಯೊ", "21:9 / 16:9 cinematic camera movements, mood lighting & orchestral score", "ಸಿನೆಮ್ಯಾಟಿಕ್ ಕ್ಯಾಮೆರಾ ಚಲನೆ, ಮೂಡ್ ಲೈಟಿಂಗ್ & ಆರ್ಕೆಸ್ಟ್ರಾ ಸಂಗೀತ", StoryVideoFormat.LANDSCAPE_16_9, 90, "🎥", 0xFF7C3AED),
+    PHOTO_TO_VIDEO("photo_to_video", "Photo to Video", "ಫೋಟೋ ಟು ವೀಡಿಯೊ", "Image sequence slideshow with pan/zoom parallax & background score", "ಪ್ಯಾನಿಂಗ್/ಜೂಮ್ ಪ್ಯಾರಾಲಾಕ್ಸ್ & ಹಿನ್ನೆಲೆ ಸಂಗೀತವಿರುವ ಸ್ಲೈಡ್‌ಶೋ", StoryVideoFormat.LANDSCAPE_16_9, 45, "📸", 0xFF059669),
+    STORY_TO_COMIC("comic", "Story to Animated Comic", "ಸ್ಟೋರಿ ಟು ಅನಿಮೇಟೆಡ್ ಕಾಮಿಕ್", "Kinetic speech bubbles, comic book SFX (BOOM/WHOOSH) & sync audio", "ಸ್ಪೀಚ್ ಬಬಲ್‌ಗಳು, ಕಾಮಿಕ್ ಬುಕ್ SFX & ಸಿಂಕ್ ಆಡಿಯೊ", StoryVideoFormat.LANDSCAPE_16_9, 60, "💥", 0xFFF59E0B),
+    CUSTOM_VIDEO("custom", "Custom Video Creation", "ಕಸ್ಟಮ್ ವೀಡಿಯೊ ರಚನೆ", "Custom aspect ratios, fps 24/30/60, multi-track timeline & master export", "ಕಸ್ಟಮ್ ಆಸ್ಪೆಕ್ಟ್ ರೇಷಿಯೋ, fps, ಮಲ್ಟಿ-ಟ್ರ್ಯಾಕ್ ಟೈಮ್‌ಲೈನ್ & ರಫ್ತು", StoryVideoFormat.LANDSCAPE_16_9, 60, "🛠️", 0xFF4B5563)
 }
 
 enum class AssetStatus {
@@ -54,16 +78,29 @@ enum class AssetStatus {
 data class StorySceneData(
     val sceneNumber: Int,
     var title: String,
-    var characterDescription: String,
-    var dialogue: String,
-    var voiceover: String,
-    var visualPrompt: String,
+    var characterDescription: String = "",
+    var dialogue: String = "",
+    var voiceover: String = "",
+    var visualPrompt: String = "",
     var durationSec: Int = 5,
     var imageFilePath: String? = null,
     var audioFilePath: String? = null,
     var imageStatus: AssetStatus = AssetStatus.PENDING,
     var audioStatus: AssetStatus = AssetStatus.PENDING,
-    var errorMessage: String? = null
+    var errorMessage: String? = null,
+    var description: String = "",
+    var charactersAppearing: String = "",
+    var locationBackground: String = "",
+    var characterActions: String = "",
+    var cameraAngle: String = "Medium Shot (Eye Level)",
+    var cameraMovement: String = "Slow Pan & Parallax",
+    var lightingAtmosphere: String = "Cinematic Ambient",
+    var negativePrompt: String = "blurry, low quality, distorted anatomy, text artifacts",
+    var subtitle: String = "",
+    var bgmSoundEffects: String = "Acoustic Ambient Score",
+    var videoFilePath: String? = null,
+    var videoStatus: AssetStatus = AssetStatus.PENDING,
+    var narration: String = ""
 )
 
 data class StoryScriptData(
@@ -79,7 +116,15 @@ data class StoryScriptData(
     var closingScene: String,
     var isApproved: Boolean = false,
     var exportedVideoPath: String? = null,
-    var isExported: Boolean = false
+    var isExported: Boolean = false,
+    var categoryId: String = "story_to_video",
+    var videoStyle: String = "Anime Cinematic",
+    var resolution: String = "1080p",
+    var fps: Int = 30,
+    var voiceId: String = "kn_female_1",
+    var bgmId: String = "cinematic_epic",
+    var subtitleLanguage: String = "kannada",
+    var isAiVideoEnabled: Boolean = false
 )
 
 object StoryToVideoPipeline {
@@ -272,6 +317,37 @@ object StoryToVideoPipeline {
             }
         }
 
+        val cameraAngle = when (sceneNumber) {
+            1 -> "Wide Establishing Angle"
+            2 -> "Dynamic Dutch Tilt & Over-the-Shoulder"
+            3 -> "Extreme Close-Up to Low-Angle Heroic"
+            else -> "Grand Panoramic Crane Angle"
+        }
+
+        val cameraMovement = when (sceneNumber) {
+            1 -> "Slow Push-In Tracking"
+            2 -> "Lateral Parallax Tracking Pan"
+            3 -> "Fast Zoom & Orbit"
+            else -> "Smooth Aerial Tilt & Dolly Out"
+        }
+
+        val lightingAtmosphere = when (genre) {
+            StoryGenre.THRILLER -> "Moody Noir with High-Contrast Rain Reflections"
+            StoryGenre.ACTION -> "Dynamic Cyberpunk Neon & Explosive Volumetric Light"
+            StoryGenre.COMEDY -> "Bright Warm High-Key Sunlight"
+            StoryGenre.DEVOTIONAL -> "Sacred Golden Diya Glow & Volumetric Incense Haze"
+            StoryGenre.EDUCATIONAL -> "Clean Futuristic Studio Blue & Specular Highlights"
+            StoryGenre.MOTIVATION -> "Cinematic Sunrise Golden Hour & Horizon Flare"
+            StoryGenre.DRAMA -> "Soft Twilight Rim Lighting & Atmospheric Depth"
+        }
+
+        val sfx = when (sceneNumber) {
+            1 -> "Mysterious Piano Chord & Soft Wind"
+            2 -> "Rising Action Percussion & Laser Surge"
+            3 -> "Triumphant Orchestral Climax & Cymbal Swell"
+            else -> "Inspirational Acoustic Strings & Warm Choir"
+        }
+
         return StorySceneData(
             sceneNumber = sceneNumber,
             title = sceneTitle,
@@ -281,7 +357,19 @@ object StoryToVideoPipeline {
             visualPrompt = visual,
             durationSec = durationSec,
             imageStatus = AssetStatus.PENDING,
-            audioStatus = AssetStatus.PENDING
+            audioStatus = AssetStatus.PENDING,
+            description = "Detailed scene $sceneNumber breakdown for $topic: $sceneTitle",
+            charactersAppearing = "Protagonist (${charPrompt.take(30)}...)",
+            locationBackground = "$topic environment with atmospheric $lightingAtmosphere",
+            characterActions = "Main action: $dialogue",
+            cameraAngle = cameraAngle,
+            cameraMovement = cameraMovement,
+            lightingAtmosphere = lightingAtmosphere,
+            negativePrompt = "blurry, low quality, distorted anatomy, text artifacts, watermark",
+            subtitle = voiceover,
+            bgmSoundEffects = sfx,
+            videoStatus = AssetStatus.PENDING,
+            narration = voiceover
         )
     }
 
@@ -336,6 +424,10 @@ object StoryToVideoPipeline {
             }
             StoryVideoFormat.SQUARE_1_1 -> {
                 width = 1000
+                height = 1000
+            }
+            StoryVideoFormat.FEED_4_5 -> {
+                width = 800
                 height = 1000
             }
         }
@@ -484,6 +576,13 @@ object StoryToVideoPipeline {
      * Synthesizes REAL audio for narration text using Android's TextToSpeech engine,
      * writes a valid audio file to local storage, and returns the file path.
      */
+    suspend fun generateAndSaveSceneAudio(
+        context: Context,
+        scriptId: String,
+        scene: StorySceneData,
+        language: String
+    ): File = synthesizeSceneAudioFile(context, scriptId, scene, language)
+
     suspend fun synthesizeSceneAudioFile(
         context: Context,
         scriptId: String,
@@ -502,33 +601,36 @@ object StoryToVideoPipeline {
         writeSamplePcmWav(canonicalAudioFile, durationSec = scene.durationSec.coerceAtLeast(3))
         writeSamplePcmWav(legacyAudioFile, durationSec = scene.durationSec.coerceAtLeast(3))
 
-        // Attempt actual TTS synthesis on main thread if supported
-        withContext(Dispatchers.Main) {
-            try {
-                var ttsInstance: TextToSpeech? = null
-                ttsInstance = TextToSpeech(context) { status ->
-                    if (status == TextToSpeech.SUCCESS) {
-                        ttsInstance?.let { tts ->
-                            val targetLocale = if (language == I18n.LANG_KN) Locale("kn", "IN") else Locale.US
-                            tts.language = targetLocale
-                            tts.setSpeechRate(1.0f)
-                            tts.setPitch(1.0f)
+        // Attempt actual TTS synthesis on main thread if supported (skip on headless test environments)
+        val isRobolectric = Build.FINGERPRINT.contains("robolectric", ignoreCase = true)
+        if (!isRobolectric) {
+            withContext(Dispatchers.Main) {
+                try {
+                    var ttsInstance: TextToSpeech? = null
+                    ttsInstance = TextToSpeech(context) { status ->
+                        if (status == TextToSpeech.SUCCESS) {
+                            ttsInstance?.let { tts ->
+                                val targetLocale = if (language == I18n.LANG_KN) Locale("kn", "IN") else Locale.US
+                                tts.language = targetLocale
+                                tts.setSpeechRate(1.0f)
+                                tts.setPitch(1.0f)
 
-                            val utteranceId = "utt_${scriptId}_${scene.sceneNumber}"
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                                val params = Bundle()
-                                params.putString(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, utteranceId)
-                                tts.synthesizeToFile(scene.voiceover, params, canonicalAudioFile, utteranceId)
-                            } else {
-                                val params = HashMap<String, String>()
-                                params[TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID] = utteranceId
-                                @Suppress("DEPRECATION")
-                                tts.synthesizeToFile(scene.voiceover, params, canonicalAudioFile.absolutePath)
+                                val utteranceId = "utt_${scriptId}_${scene.sceneNumber}"
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                                    val params = Bundle()
+                                    params.putString(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, utteranceId)
+                                    tts.synthesizeToFile(scene.voiceover, params, canonicalAudioFile, utteranceId)
+                                } else {
+                                    val params = HashMap<String, String>()
+                                    params[TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID] = utteranceId
+                                    @Suppress("DEPRECATION")
+                                    tts.synthesizeToFile(scene.voiceover, params, canonicalAudioFile.absolutePath)
+                                }
                             }
                         }
                     }
-                }
-            } catch (_: Exception) {}
+                } catch (_: Exception) {}
+            }
         }
 
         canonicalAudioFile
@@ -547,7 +649,7 @@ object StoryToVideoPipeline {
         val dataSize = numSamples * numChannels * (bitsPerSample / 8)
         val chunkSize = 36 + dataSize
 
-        FileOutputStream(file).use { out ->
+        java.io.BufferedOutputStream(FileOutputStream(file), 16384).use { out ->
             // RIFF header
             out.write("RIFF".toByteArray())
             out.write(intToByteArray(chunkSize))

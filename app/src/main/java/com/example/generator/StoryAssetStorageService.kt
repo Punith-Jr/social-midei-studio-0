@@ -443,6 +443,114 @@ object StoryAssetStorageService {
     }
 
     /**
+     * Dedicated project subdirectories for the 10-folder structure.
+     */
+    fun getScriptDirectory(context: Context, scriptId: String): File =
+        File(getProjectDirectory(context, scriptId), "script").also { if (!it.exists()) it.mkdirs() }
+
+    fun getCharactersDirectory(context: Context, scriptId: String): File =
+        File(getProjectDirectory(context, scriptId), "characters").also { if (!it.exists()) it.mkdirs() }
+
+    fun getVideoClipsDirectory(context: Context, scriptId: String): File =
+        File(getProjectDirectory(context, scriptId), "video_clips").also { if (!it.exists()) it.mkdirs() }
+
+    fun getSubtitlesDirectory(context: Context, scriptId: String): File =
+        File(getProjectDirectory(context, scriptId), "subtitles").also { if (!it.exists()) it.mkdirs() }
+
+    fun getThumbnailsDirectory(context: Context, scriptId: String): File =
+        File(getProjectDirectory(context, scriptId), "thumbnails").also { if (!it.exists()) it.mkdirs() }
+
+    fun getExportsDirectory(context: Context, scriptId: String): File =
+        File(getProjectDirectory(context, scriptId), "exports").also { if (!it.exists()) it.mkdirs() }
+
+    fun getLogsDirectory(context: Context, scriptId: String): File =
+        File(getProjectDirectory(context, scriptId), "logs").also { if (!it.exists()) it.mkdirs() }
+
+    /**
+     * Initializes the complete 10-folder project layout and writes project.json metadata.
+     */
+    fun initializeCompleteProjectStructure(context: Context, scriptId: String, title: String = "New Project"): File {
+        val projectDir = getProjectDirectory(context, scriptId)
+        getScriptDirectory(context, scriptId)
+        getCharactersDirectory(context, scriptId)
+        getImagesDirectory(context, scriptId)
+        getVideoClipsDirectory(context, scriptId)
+        getAudioDirectory(context, scriptId)
+        getSubtitlesDirectory(context, scriptId)
+        getThumbnailsDirectory(context, scriptId)
+        getExportsDirectory(context, scriptId)
+        getLogsDirectory(context, scriptId)
+
+        val projectJson = File(projectDir, "project.json")
+        if (!projectJson.exists()) {
+            val json = JSONObject().apply {
+                put("projectId", scriptId)
+                put("title", title)
+                put("createdAt", System.currentTimeMillis())
+                put("updatedAt", System.currentTimeMillis())
+                put("version", "2.0")
+            }
+            FileOutputStream(projectJson).use { it.write(json.toString(2).toByteArray(Charsets.UTF_8)) }
+        }
+        return projectDir
+    }
+
+    /**
+     * Duplicates an existing project into a new project with fresh ID and updated title.
+     */
+    fun duplicateProject(context: Context, sourceScriptId: String, newTitle: String): String {
+        val newScriptId = java.util.UUID.randomUUID().toString().take(8)
+        val sourceDir = getProjectDirectory(context, sourceScriptId)
+        val targetDir = getProjectDirectory(context, newScriptId)
+
+        if (sourceDir.exists()) {
+            sourceDir.copyRecursively(targetDir, overwrite = true)
+            // Update project.json
+            val projectJson = File(targetDir, "project.json")
+            val json = JSONObject().apply {
+                put("projectId", newScriptId)
+                put("title", newTitle)
+                put("clonedFrom", sourceScriptId)
+                put("createdAt", System.currentTimeMillis())
+                put("updatedAt", System.currentTimeMillis())
+            }
+            FileOutputStream(projectJson).use { it.write(json.toString(2).toByteArray(Charsets.UTF_8)) }
+        } else {
+            initializeCompleteProjectStructure(context, newScriptId, newTitle)
+        }
+        return newScriptId
+    }
+
+    /**
+     * Renames a project title in its local metadata.
+     */
+    fun renameProject(context: Context, scriptId: String, newTitle: String): Boolean {
+        val projectDir = getProjectDirectory(context, scriptId)
+        val projectJson = File(projectDir, "project.json")
+        return try {
+            val json = if (projectJson.exists()) {
+                JSONObject(projectJson.readText(Charsets.UTF_8))
+            } else {
+                JSONObject()
+            }
+            json.put("projectId", scriptId)
+            json.put("title", newTitle)
+            json.put("updatedAt", System.currentTimeMillis())
+            FileOutputStream(projectJson).use { it.write(json.toString(2).toByteArray(Charsets.UTF_8)) }
+            true
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    /**
+     * Deletes a project and all its subfolders.
+     */
+    fun deleteProject(context: Context, scriptId: String): Boolean {
+        return clearProjectAssets(context, scriptId)
+    }
+
+    /**
      * Clears all assets for a given project from internal storage.
      */
     fun clearProjectAssets(context: Context, scriptId: String): Boolean {

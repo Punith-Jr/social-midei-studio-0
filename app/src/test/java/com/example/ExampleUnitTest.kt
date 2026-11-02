@@ -340,6 +340,108 @@ class ExampleUnitTest {
         assertTrue(statuses.contains(com.example.generator.AssetStatus.READY))
         assertTrue(statuses.contains(com.example.generator.AssetStatus.FAILED))
     }
+
+    @Test
+    fun testTenVideoCreationCategories() {
+        val categories = com.example.generator.VideoCreationCategory.values()
+        assertEquals(10, categories.size)
+
+        val ids = categories.map { it.id }
+        assertTrue(ids.contains("manga"))
+        assertTrue(ids.contains("youtube_long"))
+        assertTrue(ids.contains("facebook"))
+        assertTrue(ids.contains("instagram"))
+        assertTrue(ids.contains("shorts"))
+        assertTrue(ids.contains("reels"))
+        assertTrue(ids.contains("cinematic"))
+        assertTrue(ids.contains("photo_to_video"))
+        assertTrue(ids.contains("comic"))
+        assertTrue(ids.contains("custom"))
+
+        for (cat in categories) {
+            assertTrue(cat.titleEn.isNotBlank())
+            assertTrue(cat.titleKn.isNotBlank())
+            assertTrue(cat.iconEmoji.isNotBlank())
+            assertNotNull(cat.defaultAspect)
+        }
+    }
+
+    @Test
+    fun testSubtitleGeneratorServiceSrtAndVttFormatting() {
+        val scenes = listOf(
+            com.example.generator.StorySceneData(
+                sceneNumber = 1,
+                title = "Scene 1",
+                voiceover = "First scene narration line in Kannada and English",
+                durationSec = 5
+            ),
+            com.example.generator.StorySceneData(
+                sceneNumber = 2,
+                title = "Scene 2",
+                voiceover = "Second scene narration line with full subtitle timing",
+                durationSec = 6
+            )
+        )
+
+        val entries = com.example.generator.SubtitleGeneratorService.generateSubtitleEntries(scenes)
+        assertTrue(entries.isNotEmpty())
+        assertEquals(0L, entries[0].startMs)
+        assertEquals(5000L, entries[0].endMs)
+
+        val srt = com.example.generator.SubtitleGeneratorService.generateSrtContent(entries)
+        assertTrue(srt.contains("00:00:00,000 --> 00:00:05,000"))
+        assertTrue(srt.contains("First scene narration line"))
+
+        val vtt = com.example.generator.SubtitleGeneratorService.generateVttContent(entries)
+        assertTrue(vtt.startsWith("WEBVTT"))
+        assertTrue(vtt.contains("00:00:00.000 --> 00:00:05.000"))
+    }
+
+    @Test
+    fun testAudioAndSfxEngineLibrary() {
+        val bgmTracks = com.example.generator.AudioAndSfxEngine.BGM_LIBRARY
+        assertTrue(bgmTracks.size >= 6)
+        assertTrue(bgmTracks.any { it.genre == "Cinematic" })
+        assertTrue(bgmTracks.any { it.genre == "Emotional" })
+        assertTrue(bgmTracks.any { it.genre == "Action" })
+
+        val sfx = com.example.generator.AudioAndSfxEngine.SFX_LIBRARY
+        assertTrue(sfx.size >= 6)
+        assertTrue(sfx.any { it.id == "whoosh_fast" })
+        assertTrue(sfx.any { it.id == "impact_boom" })
+    }
+
+    @Test
+    fun testAllSeventeenScenePropertiesGenerated() {
+        val script = com.example.generator.StoryToVideoPipeline.generateStructuredStory(
+            topic = "Cyberpunk Neo Bengaluru 2077",
+            genre = com.example.generator.StoryGenre.ACTION,
+            language = I18n.LANG_EN,
+            durationPreset = com.example.generator.StoryDurationPreset.SEC_15,
+            format = com.example.generator.StoryVideoFormat.LANDSCAPE_16_9
+        )
+
+        for (scene in script.scenes) {
+            assertTrue(scene.sceneNumber > 0)
+            assertTrue(scene.title.isNotBlank())
+            assertTrue(scene.description.isNotBlank())
+            assertTrue(scene.charactersAppearing.isNotBlank())
+            assertTrue(scene.locationBackground.isNotBlank())
+            assertTrue(scene.characterActions.isNotBlank())
+            assertTrue(scene.cameraAngle.isNotBlank())
+            assertTrue(scene.cameraMovement.isNotBlank())
+            assertTrue(scene.lightingAtmosphere.isNotBlank())
+            assertTrue(scene.visualPrompt.isNotBlank())
+            assertTrue(scene.negativePrompt.isNotBlank())
+            assertTrue(scene.narration.isNotBlank())
+            assertTrue(scene.dialogue.isNotBlank())
+            assertTrue(scene.subtitle.isNotBlank())
+            assertTrue(scene.durationSec > 0)
+            assertTrue(scene.bgmSoundEffects.isNotBlank())
+            assertEquals(com.example.generator.AssetStatus.PENDING, scene.imageStatus)
+            assertEquals(com.example.generator.AssetStatus.PENDING, scene.videoStatus)
+        }
+    }
 }
 
 

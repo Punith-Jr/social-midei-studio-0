@@ -60,11 +60,18 @@ object VideoExportHelper {
                     URL(videoUriOrUrl).openStream().use { input ->
                         input.copyTo(out)
                     }
-                } else if (videoUriOrUrl.startsWith("content://") || videoUriOrUrl.startsWith("file://")) {
+                } else if (videoUriOrUrl.startsWith("content://")) {
                     resolver.openInputStream(Uri.parse(videoUriOrUrl))?.use { input ->
                         input.copyTo(out)
                     } ?: run {
                         // Fallback sample MP4 byte writer
+                        out.write("MP4_HEADER_CREATOR_STUDIO".toByteArray())
+                    }
+                } else if (videoUriOrUrl.startsWith("file://")) {
+                    val localFile = File(videoUriOrUrl.removePrefix("file://"))
+                    if (localFile.exists()) {
+                        localFile.inputStream().use { input -> input.copyTo(out) }
+                    } else {
                         out.write("MP4_HEADER_CREATOR_STUDIO".toByteArray())
                     }
                 } else {

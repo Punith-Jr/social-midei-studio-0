@@ -195,6 +195,88 @@ class ExampleRobolectricTest {
       org.junit.Assert.assertTrue(retrieved?.scenesJson?.contains("READY") == true)
     }
   }
+
+  @Test
+  fun `verify StoryAssetStorageService initializes complete 10-folder project layout and project json`() {
+    val context = ApplicationProvider.getApplicationContext<Context>()
+    val scriptId = "proj_test_structure"
+    val projectTitle = "Epic Manga Animation"
+
+    val projectDir = com.example.generator.StoryAssetStorageService.initializeCompleteProjectStructure(
+      context = context,
+      scriptId = scriptId,
+      title = projectTitle
+    )
+
+    org.junit.Assert.assertTrue(projectDir.exists())
+    org.junit.Assert.assertTrue(java.io.File(projectDir, "script").exists())
+    org.junit.Assert.assertTrue(java.io.File(projectDir, "characters").exists())
+    org.junit.Assert.assertTrue(java.io.File(projectDir, "images").exists())
+    org.junit.Assert.assertTrue(java.io.File(projectDir, "video_clips").exists())
+    org.junit.Assert.assertTrue(java.io.File(projectDir, "audio").exists())
+    org.junit.Assert.assertTrue(java.io.File(projectDir, "subtitles").exists())
+    org.junit.Assert.assertTrue(java.io.File(projectDir, "thumbnails").exists())
+    org.junit.Assert.assertTrue(java.io.File(projectDir, "exports").exists())
+    org.junit.Assert.assertTrue(java.io.File(projectDir, "logs").exists())
+
+    val projectJson = java.io.File(projectDir, "project.json")
+    org.junit.Assert.assertTrue(projectJson.exists())
+    val jsonContent = projectJson.readText(Charsets.UTF_8)
+    org.junit.Assert.assertTrue(jsonContent.contains(scriptId))
+    org.junit.Assert.assertTrue(jsonContent.contains(projectTitle))
+
+    // Test rename
+    val renamed = com.example.generator.StoryAssetStorageService.renameProject(context, scriptId, "Renamed Manga Title")
+    org.junit.Assert.assertTrue(renamed)
+    org.junit.Assert.assertTrue(projectJson.readText(Charsets.UTF_8).contains("Renamed Manga Title"))
+
+    // Test duplicate
+    val duplicatedId = com.example.generator.StoryAssetStorageService.duplicateProject(context, scriptId, "Duplicated Copy")
+    org.junit.Assert.assertNotNull(duplicatedId)
+    val dupDir = com.example.generator.StoryAssetStorageService.getProjectDirectory(context, duplicatedId)
+    org.junit.Assert.assertTrue(dupDir.exists())
+
+    // Clean up
+    com.example.generator.StoryAssetStorageService.clearProjectAssets(context, scriptId)
+    com.example.generator.StoryAssetStorageService.clearProjectAssets(context, duplicatedId)
+  }
+
+  @Test
+  fun `verify VideoRenderEngine renders full video pipeline with asset verification BGM subtitles and exports`() {
+    kotlinx.coroutines.runBlocking {
+      val context = ApplicationProvider.getApplicationContext<Context>()
+      val script = com.example.generator.StoryToVideoPipeline.generateStructuredStory(
+        topic = "AI Video Generation Test",
+        genre = com.example.generator.StoryGenre.ACTION,
+        language = com.example.i18n.I18n.LANG_EN,
+        durationPreset = com.example.generator.StoryDurationPreset.SEC_15,
+        format = com.example.generator.StoryVideoFormat.PORTRAIT_9_16
+      )
+
+      val progressUpdates = mutableListOf<com.example.generator.RenderProgressUpdate>()
+      val renderResult = com.example.generator.VideoRenderEngine.renderVideo(
+        context = context,
+        script = script,
+        resolution = "1080p",
+        fps = 30
+      ) { update ->
+        progressUpdates.add(update)
+      }
+
+      org.junit.Assert.assertTrue("Render should succeed", renderResult.isSuccess)
+      val output = renderResult.getOrNull()
+      org.junit.Assert.assertNotNull(output)
+      org.junit.Assert.assertTrue(output!!.mp4Uri.isNotBlank())
+      org.junit.Assert.assertNotNull(output.srtSubtitleFile)
+      org.junit.Assert.assertTrue(output.srtSubtitleFile!!.exists())
+      org.junit.Assert.assertTrue(output.durationSec > 0)
+      org.junit.Assert.assertTrue(progressUpdates.isNotEmpty())
+      org.junit.Assert.assertTrue(progressUpdates.any { it.fraction >= 0.85f })
+
+      // Clean up test project
+      com.example.generator.StoryAssetStorageService.clearProjectAssets(context, script.id)
+    }
+  }
 }
 
 

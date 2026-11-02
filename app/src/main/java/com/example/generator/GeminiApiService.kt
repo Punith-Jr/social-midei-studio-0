@@ -231,6 +231,7 @@ object GeminiApiService {
             StoryVideoFormat.PORTRAIT_9_16 -> "9:16"
             StoryVideoFormat.LANDSCAPE_16_9 -> "16:9"
             StoryVideoFormat.SQUARE_1_1 -> "1:1"
+            StoryVideoFormat.FEED_4_5 -> "3:4"
         }
 
         // Imagen 3 endpoint
