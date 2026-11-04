@@ -15,12 +15,17 @@ import { renderVideo } from './services/videoRenderer.js';
 import { uploadToYouTube } from './services/youtubeUploader.js';
 import authRoutes from './routes/authRoutes.js';
 import videoRoutes from './routes/videoRoutes.js';
+import VideoType from './models/VideoType.js';
+import { catalogForDatabase } from './services/videoTypeCatalog.js';
+import AnimationStyle from './models/AnimationStyle.js';
+import { animationCatalogForDatabase } from './services/animationPromptService.js';
 
 dotenv.config();
 const app = express();
 
 app.use(express.json());
 app.use(cors());
+app.use(express.static(path.join(process.cwd(), 'public')));
 
 app.use('/api', authRoutes);
 app.use('/api', videoRoutes);
@@ -157,6 +162,12 @@ const mongoUri = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/creator_stu
 mongoose.connect(mongoUri)
   .then(() => {
     console.log('🗄️ MongoDB ಡೇಟಾಬೇಸ್ ಯಶಸ್ವಿಯಾಗಿ ಕನೆಕ್ಟ್ ಆಗಿದೆ.');
+    VideoType.bulkWrite(catalogForDatabase().map((videoType) => ({
+      updateOne: { filter: { key: videoType.key }, update: { $setOnInsert: videoType }, upsert: true }
+    }))).catch((error) => console.warn('⚠️ Video type seed ದೋಷ:', error.message));
+    AnimationStyle.bulkWrite(animationCatalogForDatabase().map((animationStyle) => ({
+      updateOne: { filter: { key: animationStyle.key }, update: { $setOnInsert: animationStyle }, upsert: true }
+    }))).catch((error) => console.warn('⚠️ Animation style seed ದೋಷ:', error.message));
     app.listen(PORT, () => {
       console.log(`🚀 ಸರ್ವರ್ ಈ ಪೋರ್ಟ್ನಲ್ಲಿ ರನ್ ಆಗುತ್ತಿದೆ: http://localhost:${PORT}`);
     });

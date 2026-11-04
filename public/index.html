@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="kn">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#101114" />
+    <title>Creator Studio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Noto+Sans+Kannada:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="#create" aria-label="Creator Studio home">
+          <span class="brand-mark">CS</span>
+          <span>Creator Studio</span>
+        </a>
+        <nav class="desktop-nav" aria-label="Primary navigation">
+          <a class="nav-link active" href="#create">Create</a>
+          <a class="nav-link" href="#library">Library</a>
+        </nav>
+        <button class="icon-button" id="refreshButton" type="button" title="Refresh library" aria-label="Refresh library">↻</button>
+      </header>
+
+      <main>
+        <section class="hero-section" id="create">
+          <div class="hero-copy">
+            <p class="eyebrow">STORY TO VIDEO WORKSPACE</p>
+            <h1>ಕಥೆಯಿಂದ <em>ಸಿದ್ಧ ವೀಡಿಯೊ</em> ವರೆಗೆ.</h1>
+            <p class="hero-description">ಕಥೆ ಬರೆಯಿರಿ, ದೃಶ್ಯಗಳನ್ನು ತಿದ್ದಿರಿ, ಮತ್ತು ನಿಮ್ಮ short-form concept ಅನ್ನು production-ready storyboard ಆಗಿ ಮಾಡಿ.</p>
+          </div>
+          <div class="status-pill"><span class="status-dot"></span><span id="serviceStatus">Checking studio</span></div>
+        </section>
+
+        <section class="workspace-grid">
+          <form class="panel create-panel" id="storyForm">
+            <div class="panel-heading">
+              <div>
+                <p class="section-kicker">01 / BRIEF</p>
+                <h2>ನಿಮ್ಮ ಕಥೆಯನ್ನು ಪ್ರಾರಂಭಿಸಿ</h2>
+              </div>
+              <span class="step-number">01</span>
+            </div>
+
+            <label class="field-label" for="topic">ವಿಷಯ / ಶೀರ್ಷಿಕೆ</label>
+            <input id="topic" name="topic" type="text" placeholder="ಉದಾ: ಕಾಗೆ ಮತ್ತು ನರಿ" required />
+
+            <label class="field-label" for="story">ಕಥೆ ಅಥವಾ prompt</label>
+            <textarea id="story" name="story" rows="6" placeholder="ನಿಮ್ಮ ಕಥೆಯನ್ನು ಕನ್ನಡ ಅಥವಾ English ನಲ್ಲಿ ಬರೆಯಿರಿ..."></textarea>
+
+            <div class="field-grid two-columns">
+              <div>
+                <label class="field-label" for="videoType">ವೀಡಿಯೊ ಪ್ರಕಾರ</label>
+                <select id="videoType" name="videoType"></select>
+              </div>
+              <div>
+                <label class="field-label" for="animationStyle">Animation style</label>
+                <select id="animationStyle" name="animationStyle"></select>
+              </div>
+            </div>
+
+            <div class="field-grid three-columns">
+              <div>
+                <label class="field-label" for="language">ಭಾಷೆ</label>
+                <select id="language" name="language">
+                  <option value="kn">ಕನ್ನಡ</option>
+                  <option value="en">English</option>
+                  <option value="hi">हिन्दी</option>
+                </select>
+              </div>
+              <div>
+                <label class="field-label" for="aspectRatio">ಅನುಪಾತ</label>
+                <select id="aspectRatio" name="aspectRatio">
+                  <option value="9:16">9:16 vertical</option>
+                  <option value="16:9">16:9 landscape</option>
+                  <option value="1:1">1:1 square</option>
+                  <option value="4:5">4:5 feed</option>
+                </select>
+              </div>
+              <div>
+                <label class="field-label" for="duration">ಅವಧಿ</label>
+                <select id="duration" name="duration">
+                  <option value="30 sec">30 sec</option>
+                  <option value="45 sec">45 sec</option>
+                  <option value="60 sec">60 sec</option>
+                  <option value="90 sec">90 sec</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="upload-row">
+              <label class="upload-control">
+                <span class="upload-icon">＋</span>
+                <span>ಚಿತ್ರ ಸೇರಿಸಿ</span>
+                <input id="imageUpload" type="file" accept="image/*" multiple />
+              </label>
+              <label class="upload-control">
+                <span class="upload-icon">♪</span>
+                <span>ಧ್ವನಿ ಸೇರಿಸಿ</span>
+                <input id="audioUpload" type="file" accept="audio/*" />
+              </label>
+              <span class="upload-note" id="uploadStatus">Optional assets</span>
+            </div>
+
+            <button class="primary-button" id="generateButton" type="submit">
+              <span>ದೃಶ್ಯಗಳನ್ನು ರಚಿಸಿ</span><span class="button-arrow">→</span>
+            </button>
+            <p class="form-message" id="formMessage" role="status"></p>
+          </form>
+
+          <section class="panel storyboard-panel" id="storyboardPanel" aria-live="polite">
+            <div class="panel-heading">
+              <div>
+                <p class="section-kicker">02 / STORYBOARD</p>
+                <h2>ನಿಮ್ಮ ದೃಶ್ಯಗಳು</h2>
+              </div>
+              <span class="scene-count" id="sceneCount">0 scenes</span>
+            </div>
+            <div class="empty-state" id="emptyState">
+              <div class="empty-art">✦</div>
+              <h3>ಇಲ್ಲಿ ನಿಮ್ಮ ಕಥೆ ಮೂಡುತ್ತದೆ</h3>
+              <p>Brief ತುಂಬಿಸಿ. Claude ನಿಮ್ಮ ಕಥೆಯನ್ನು ದೃಶ್ಯಗಳು, narration ಮತ್ತು camera direction ಆಗಿ ವಿಭಜಿಸುತ್ತದೆ.</p>
+            </div>
+            <div class="scene-list" id="sceneList"></div>
+          </section>
+        </section>
+
+        <section class="library-section" id="library">
+          <div class="section-header">
+            <div>
+              <p class="section-kicker">03 / LIBRARY</p>
+              <h2>ಹಿಂದಿನ projects</h2>
+            </div>
+            <button class="text-button" id="loadLibraryButton" type="button">Refresh library ↻</button>
+          </div>
+          <div class="library-grid" id="libraryGrid">
+            <p class="muted-message">Loading projects...</p>
+          </div>
+        </section>
+      </main>
+
+      <nav class="mobile-nav" aria-label="Mobile navigation">
+        <a class="mobile-nav-link active" href="#create"><span>＋</span>Create</a>
+        <a class="mobile-nav-link" href="#library"><span>▤</span>Library</a>
+      </nav>
+    </div>
+    <script src="/app.js" defer></script>
+  </body>
+</html>

@@ -1,7 +1,138 @@
 import express from 'express';
 import GeneratedVideo from '../models/GeneratedVideo.js';
+import VideoType from '../models/VideoType.js';
+import { catalogForDatabase } from '../services/videoTypeCatalog.js';
+import { generateClaudeVideo } from '../services/claudeVideoService.js';
+import AnimationStyle from '../models/AnimationStyle.js';
+import {
+  ANIMATION_PART_C_PROMPTS,
+  animationCatalogForDatabase
+} from '../services/animationPromptService.js';
+import { generateClaudeAnimation } from '../services/claudeAnimationService.js';
 
 const router = express.Router();
+
+/**
+ * GET /api/animation-styles
+ * Returns enabled animation styles for the Create page.
+ */
+router.get('/animation-styles', async (req, res) => {
+  try {
+    const stored = await AnimationStyle.find({ enabled: true }).sort({ name: 1 }).lean();
+    res.json({ success: true, data: stored.length ? stored : animationCatalogForDatabase() });
+  } catch (error) {
+    res.json({ success: true, data: animationCatalogForDatabase(), source: 'defaults' });
+  }
+});
+
+/**
+ * GET /api/animation-prompts
+ * Returns reusable character, image, motion, audio, subtitle, and thumbnail prompts.
+ */
+router.get('/animation-prompts', (req, res) => {
+  res.json({ success: true, data: ANIMATION_PART_C_PROMPTS });
+});
+
+/**
+ * PUT /api/animation-styles/:key
+ * Admin endpoint for editing an animation style prompt.
+ */
+router.put('/animation-styles/:key', async (req, res) => {
+  try {
+    const allowed = ['name', 'description', 'aspectRatios', 'defaultAspectRatio', 'prompt', 'enabled'];
+    const updates = Object.fromEntries(Object.entries(req.body).filter(([key]) => allowed.includes(key)));
+    const updated = await AnimationStyle.findOneAndUpdate(
+      { key: req.params.key },
+      { $set: updates, $setOnInsert: { key: req.params.key } },
+      { new: true, upsert: true, runValidators: true, setDefaultsOnInsert: true }
+    ).lean();
+    res.json({ success: true, data: updated });
+  } catch (error) {
+    res.status(400).json({ success: false, message: 'Failed to update animation style', error: error.message });
+  }
+});
+
+/**
+ * POST /api/animation-styles/:key/generate
+ * Sends the selected animation style as Claude system prompt and story as user message.
+ */
+router.post('/animation-styles/:key/generate', async (req, res) => {
+  try {
+    const { topic = '', story = '', settings = {}, userMessage } = req.body;
+    const message = userMessage || JSON.stringify({ topic, story, ...settings });
+    const storedStyle = await AnimationStyle.findOne({ key: req.params.key, enabled: true }).lean();
+    const data = await generateClaudeAnimation({
+      styleKey: req.params.key,
+      styleOverride: storedStyle,
+      userMessage: message,
+      settings
+    });
+    res.json({ success: true, data });
+  } catch (error) {
+    res.status(502).json({ success: false, message: 'Animation generation failed', error: error.message });
+  }
+});
+
+/**
+ * GET /api/video-types
+ * Returns enabled video types for the Create page dropdown/cards.
+ */
+router.get('/video-types', async (req, res) => {
+  try {
+    const stored = await VideoType.find({ enabled: true }).sort({ name: 1 }).lean();
+    res.json({ success: true, data: stored.length ? stored : catalogForDatabase() });
+  } catch (error) {
+    res.json({ success: true, data: catalogForDatabase(), source: 'defaults' });
+  }
+});
+
+/**
+ * PUT /api/video-types/:key
+ * Admin endpoint for changing a prompt without an app release.
+ */
+router.put('/video-types/:key', async (req, res) => {
+  try {
+    const allowed = ['name', 'description', 'aspectRatios', 'defaultAspectRatio', 'prompt', 'enabled'];
+    const updates = Object.fromEntries(Object.entries(req.body).filter(([key]) => allowed.includes(key)));
+    const updated = await VideoType.findOneAndUpdate(
+      { key: req.params.key },
+      {
+        $set: updates,
+        $setOnInsert: { key: req.params.key }
+      },
+      {
+        new: true,
+        upsert: true,
+        runValidators: true,
+        setDefaultsOnInsert: true
+      }
+    ).lean();
+    res.json({ success: true, data: updated });
+  } catch (error) {
+    res.status(400).json({ success: false, message: 'Failed to update video type', error: error.message });
+  }
+});
+
+/**
+ * POST /api/video-types/:key/generate
+ * Sends the selected type as Claude system prompt and the story as user message.
+ */
+router.post('/video-types/:key/generate', async (req, res) => {
+  try {
+    const { topic = '', story = '', settings = {}, userMessage } = req.body;
+    const message = userMessage || JSON.stringify({ topic, story, ...settings });
+    const storedVideoType = await VideoType.findOne({ key: req.params.key, enabled: true }).lean();
+    const data = await generateClaudeVideo({
+      videoTypeKey: req.params.key,
+      videoTypeOverride: storedVideoType,
+      userMessage: message,
+      settings
+    });
+    res.json({ success: true, data });
+  } catch (error) {
+    res.status(502).json({ success: false, message: 'Video generation failed', error: error.message });
+  }
+});
 
 /**
  * GET /api/videos
