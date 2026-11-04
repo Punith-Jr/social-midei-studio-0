@@ -39,17 +39,36 @@ export async function fetchImagesForPrompt(query, count = 3) {
     }
   }
 
-  // Fallback: Generate 3 high-contrast themed SVG/JPEG frames for FFmpeg
+  // Fallback: Generate valid lightweight frames so rendering still works offline.
   const colors = ["#E11D48", "#7C3AED", "#0284C7"];
   for (let i = 0; i < count; i++) {
-    const filePath = path.join(downloadDir, `scene_frame_${Date.now()}_${i}.png`);
-    // Minimal 1080x1920 solid colored PNG buffer or placeholder
-    // Writing sample frame file
-    const safeTitle = (query || "Creator Studio").slice(0, 30);
-    fs.writeFileSync(filePath, Buffer.from("")); 
+    const filePath = path.join(downloadDir, `scene_frame_${Date.now()}_${i}.ppm`);
+    fs.writeFileSync(filePath, createFallbackFrame(colors[i % colors.length]));
     imagePaths.push(filePath);
   }
 
-  console.log('✅ ವೀಡಿಯೊಗಾಗಿ 3 ದೃಶ್ಯಗಳು ಸಿದ್ಧವಾಗಿವೆ.');
+  console.log(`✅ ${imagePaths.length} fallback ದೃಶ್ಯಗಳು ಸಿದ್ಧವಾಗಿವೆ.`);
   return imagePaths;
+}
+
+function createFallbackFrame(hexColor, width = 720, height = 1280) {
+  const red = parseInt(hexColor.slice(1, 3), 16);
+  const green = parseInt(hexColor.slice(3, 5), 16);
+  const blue = parseInt(hexColor.slice(5, 7), 16);
+  const pixels = Buffer.alloc(width * height * 3);
+
+  for (let y = 0; y < height; y++) {
+    const shade = 0.55 + (y / height) * 0.45;
+    for (let x = 0; x < width; x++) {
+      const offset = (y * width + x) * 3;
+      pixels[offset] = Math.round(red * shade);
+      pixels[offset + 1] = Math.round(green * shade);
+      pixels[offset + 2] = Math.round(blue * shade);
+    }
+  }
+
+  return Buffer.concat([
+    Buffer.from(`P6\n${width} ${height}\n255\n`),
+    pixels
+  ]);
 }

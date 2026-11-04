@@ -71,7 +71,7 @@ const generatedVideoSchema = new mongoose.Schema(
     uploadStatus: {
       type: String,
       enum: ['generating', 'rendered', 'uploading', 'uploaded', 'failed'],
-      default: 'generated',
+      default: 'generating',
       index: true
     },
     uploadId: {

@@ -9,33 +9,54 @@ export async function renderVideo(imagePaths, audioPath, outputPath) {
       return reject(new Error("No input images provided for rendering"));
     }
 
-    let command = ffmpeg();
-
-    // ಚಿತ್ರಗಳನ್ನು ಇನ್ಪುಟ್ ಆಗಿ ಸೇರಿಸುವುದು
-    imagePaths.forEach((img) => {
-      command = command.input(img).loop(3); // ಪ್ರತಿ ಚಿತ್ರವು 3 ಸೆಕೆಂಡುಗಳ ಕಾಲ ಇರುತ್ತದೆ
-    });
-
-    // ಧ್ವನಿ (Audio) ಫೈಲ್ ಅನ್ನು ಇನ್ಪುಟ್ ಮಾಡುವುದು
-    if (audioPath && fs.existsSync(audioPath)) {
-      command = command.input(audioPath);
+    const missingImage = imagePaths.find((imagePath) => !fs.existsSync(imagePath));
+    if (missingImage) {
+      return reject(new Error(`Input image does not exist: ${missingImage}`));
     }
 
-    command
-      .complexFilter([
-        // ಎಲ್ಲಾ ಚಿತ್ರಗಳನ್ನು ಒಟ್ಟುಗೂಡಿಸಿ ವೀಡಿಯೊ ಸ್ಟ್ರೀಮ್ ಮಾಡುವುದು
-        `concat=n=${imagePaths.length}:v=1:a=0[v]`
-      ])
-      .outputOptions([
-        '-map [v]',
-        '-map ' + (imagePaths.length), // ಆಡಿಯೋ ಮ್ಯಾಪಿಂಗ್
-        '-c:v libx264',
-        '-pix_fmt yuv420p',
+    const hasAudio = Boolean(audioPath && fs.existsSync(audioPath));
+    const command = ffmpeg();
+
+    imagePaths.forEach((imagePath) => {
+      command
+        .input(imagePath)
+        .inputOptions(['-loop 1', '-t 3']);
+    });
+
+    if (hasAudio) {
+      command.input(audioPath);
+    }
+
+    const sceneStreams = imagePaths.map((_, index) => `[${index}:v]`).join('');
+    const filters = [`${sceneStreams}concat=n=${imagePaths.length}:v=1:a=0[v]`];
+    const outputOptions = [
+      '-map [v]',
+      '-c:v libx264',
+      '-pix_fmt yuv420p',
+      '-r 30',
+      '-movflags +faststart'
+    ];
+
+    if (hasAudio) {
+      outputOptions.push(
+        `-map ${imagePaths.length}:a`,
         '-c:a aac',
-        '-shortest' // ಆಡಿಯೋ ಮುಗಿದ ತಕ್ಷಣ ವೀಡಿಯೊ ಮುಕ್ತಾಯಗೊಳ್ಳುವುದು
-      ])
+        '-shortest'
+      );
+    }
+
+    const outputDirectory = path.dirname(outputPath);
+    fs.mkdirSync(outputDirectory, { recursive: true });
+
+    command
+      .complexFilter(filters)
+      .outputOptions(outputOptions)
       .save(outputPath)
       .on('end', () => {
+        if (!fs.existsSync(outputPath) || fs.statSync(outputPath).size === 0) {
+          reject(new Error(`FFmpeg completed without creating output: ${outputPath}`));
+          return;
+        }
         console.log('✅ ವೀಡಿಯೊ ರೆಂಡರಿಂಗ್ ಯಶಸ್ವಿಯಾಗಿ ಮುಗಿದಿದೆ:', outputPath);
         resolve(outputPath);
       })
