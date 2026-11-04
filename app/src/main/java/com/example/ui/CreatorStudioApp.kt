@@ -51,6 +51,9 @@ fun CreatorStudioApp(
     val batchReprocessProgress by viewModel.batchReprocessProgress.collectAsStateWithLifecycle()
     val batchReprocessStatus by viewModel.batchReprocessStatus.collectAsStateWithLifecycle()
     val currentRoute by viewModel.currentRoute.collectAsStateWithLifecycle()
+    val cartoonCharacters by viewModel.cartoonCharacters.collectAsStateWithLifecycle()
+    val socialPublishLogs by viewModel.socialPublishLogs.collectAsStateWithLifecycle()
+    val aiPromptItems by viewModel.aiPromptItems.collectAsStateWithLifecycle()
 
     var showWizardDialog by remember { mutableStateOf(false) }
     var showUserLoginDialog by remember { mutableStateOf(false) }
@@ -58,12 +61,8 @@ fun CreatorStudioApp(
     var scriptGenInitialTopic by remember { mutableStateOf<String?>(null) }
     var scriptGenInitialFramework by remember { mutableStateOf<String?>(null) }
 
-    // First run wizard trigger: if wizardCompleted is false, show wizard
-    LaunchedEffect(settings.wizardCompleted) {
-        if (!settings.wizardCompleted) {
-            showWizardDialog = true
-        }
-    }
+    // Automatic wizard popup disabled per user request; accessible manually via Settings
+
 
     // Toast notification receiver (Toast alert system required for Content Calendar status transitions)
     LaunchedEffect(Unit) {
@@ -135,6 +134,12 @@ fun CreatorStudioApp(
                         onReprocessLast100 = { viewModel.reprocessLast100Jobs() },
                         onReprocessAll = { viewModel.reprocessAllJobs() },
                         onOpenUserLogin = { showUserLoginDialog = true },
+                        onNavigate = { route -> viewModel.navigateTo(route) }
+                    )
+
+                    "cross_platform_hub" -> CrossPlatformHubScreen(
+                        settings = settings,
+                        currentLanguage = currentLang,
                         onNavigate = { route -> viewModel.navigateTo(route) }
                     )
 
@@ -351,6 +356,39 @@ fun CreatorStudioApp(
                         mediaItems = mediaItems,
                         savedScripts = savedScripts,
                         onRestoreSampleData = { viewModel.seedSampleData() }
+                    )
+
+                    "ai_prompt_studio" -> AiPromptStudioScreen(
+                        settings = settings,
+                        currentLanguage = currentLang,
+                        promptList = aiPromptItems,
+                        onSavePromptToLibrary = { viewModel.addAiPromptItem(it) },
+                        onDeletePromptFromLibrary = { viewModel.deleteAiPromptItem(it) },
+                        onNavigateToSettings = { viewModel.navigateTo("api_settings") }
+                    )
+
+                    "cartoon_studio" -> CartoonVideoStudioScreen(
+                        settings = settings,
+                        currentLanguage = currentLang,
+                        characters = cartoonCharacters,
+                        onAddCharacter = { viewModel.addCartoonCharacter(it) },
+                        onDeleteCharacter = { viewModel.deleteCartoonCharacter(it) },
+                        onNavigateToVideoEditor = { viewModel.navigateTo("video_editor") }
+                    )
+
+                    "publishing_centre" -> PublishingCentreScreen(
+                        settings = settings,
+                        currentLanguage = currentLang,
+                        publishLogs = socialPublishLogs,
+                        onAddPublishLog = { viewModel.addSocialPublishLog(it) },
+                        onClearPublishLogs = { viewModel.clearAllPublishLogs() },
+                        onOpenSocialLogin = { platform -> selectedPlatformForLogin = platform }
+                    )
+
+                    "api_settings" -> ApiSettingsScreen(
+                        settings = settings,
+                        currentLanguage = currentLang,
+                        onSaveSettings = { viewModel.saveSettings(it) }
                     )
 
                     "settings" -> SettingsScreen(

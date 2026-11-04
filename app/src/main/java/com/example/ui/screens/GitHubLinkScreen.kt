@@ -37,6 +37,7 @@ import com.example.data.github.GitHubTokenValidationResult
 import com.example.i18n.I18n
 import com.example.ui.components.GitHubPATWarningBanner
 import com.example.ui.components.GitHubRepoDetailDialog
+import com.example.ui.components.GitHubFileExplorerComponent
 import com.example.ui.components.VideoGenerationProgressIndicator
 import androidx.compose.foundation.BorderStroke
 import com.example.ui.theme.*
@@ -1077,6 +1078,19 @@ fun GitHubLinkScreen(
                     }
                 }
             }
+        }
+
+        // Repository File Explorer Component (PAT Validation, Search Bar, Breadcrumbs, File Extension Icons)
+        item {
+            GitHubFileExplorerComponent(
+                owner = usernameInput.trim().ifBlank { settings.gitHubUsername },
+                repo = repoInput.trim().ifBlank { settings.gitHubRepo },
+                branch = branchInput.trim().ifBlank { settings.gitHubBranch },
+                token = tokenInput.trim().ifBlank { settings.gitHubToken },
+                tokenValidation = localTokenWarning,
+                repositoryManager = gitHubRepoManager,
+                isKannada = isKn
+            )
         }
 
         // Public Repositories List

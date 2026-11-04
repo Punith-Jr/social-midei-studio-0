@@ -346,6 +346,34 @@ fun TopHeaderBar(
                     )
                 }
 
+                // Web Studio (Mobile & Website Universal Access)
+                Button(
+                    onClick = {
+                        val webUrl = "https://ais-dev-23fxvcvnyd6ldrgdinjlpw-90582049526.asia-southeast1.run.app"
+                        openUrl(webUrl, if (currentLanguage == I18n.LANG_KN) "ವೆಬ್ ಸ್ಟುಡಿಯೋ (Website Version)" else "Web Studio (Website Version)")
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6366F1)),
+                    shape = RoundedCornerShape(10.dp),
+                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
+                    modifier = Modifier
+                        .height(38.dp)
+                        .testTag("header_web_studio_button")
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Language,
+                        contentDescription = "Web Studio",
+                        tint = Color.White,
+                        modifier = Modifier.size(15.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = if (currentLanguage == I18n.LANG_KN) "ವೆಬ್ ಆವೃತ್ತಿ" else "Web Studio",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                }
+
                 // Settings link shortcut
                 IconButton(
                     onClick = onOpenSettings,

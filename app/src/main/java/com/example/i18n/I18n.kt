@@ -26,12 +26,16 @@ object I18n {
 
             // Navigation Items
             "nav_dashboard" -> if (isKn) "ಡ್ಯಾಶ್‌ಬೋರ್ಡ್" else "Dashboard"
+            "nav_cross_platform_hub" -> if (isKn) "ಕ್ರಾಸ್-ಪ್ಲಾಟ್‌ಫಾರ್ಮ್ ಕೇಂದ್ರ" else "Cross-Platform Hub"
+            "nav_ai_prompt_studio" -> if (isKn) "AI ಪ್ರಾಂಪ್ಟ್ ಸ್ಟುಡಿಯೋ" else "AI Prompt Studio"
             "nav_story_to_video" -> if (isKn) "ಕಥೆ-ಟು-ವೀಡಿಯೊ AI" else "Story-to-Video AI"
+            "nav_cartoon_studio" -> if (isKn) "ಕಾರ್ಟೂನ್ ಸ್ಟುಡಿಯೋ" else "Cartoon Studio"
             "nav_auto_generator" -> if (isKn) "⚡ 10-ನಿಮಿಷದ ಆಟೋ ವೀಡಿಯೊ" else "⚡ 10-Min Auto Video"
             "nav_create_video" -> if (isKn) "ವೀಡಿಯೊ ರಚಿಸಿ" else "Create Video"
             "nav_shorts_reels" -> if (isKn) "ಶಾರ್ಟ್ಸ್ / ರೀಲ್ಸ್" else "Shorts / Reels"
             "nav_script_gen" -> if (isKn) "ಸ್ಕ್ರಿಪ್ಟ್ ಜನರೇಟರ್" else "Script Generator"
             "nav_thumbnail_creator" -> if (isKn) "ಥಂಬ್‌ನೇಲ್ ಮೇಕರ್" else "Thumbnail Creator"
+            "nav_publishing_centre" -> if (isKn) "ಪ್ರಕಾಶನ ಕೇಂದ್ರ" else "Publishing Centre"
             "nav_youtube" -> if (isKn) "YouTube ಟೂಲ್" else "YouTube Tool"
             "nav_instagram" -> if (isKn) "Instagram ಟೂಲ್" else "Instagram Tool"
             "nav_facebook" -> if (isKn) "Facebook ಟೂಲ್" else "Facebook Tool"
@@ -46,6 +50,7 @@ object I18n {
             "nav_opencreator_hub" -> if (isKn) "ಓಪನ್‌ಕ್ರಿಯೇಟರ್ ಹಬ್" else "OpenCreator Hub & Presets"
             "nav_github_link" -> if (isKn) "ಗಿಟ್‌ಹಬ್ ಡೇಟಾ ಲಿಂಕ್" else "GitHub Data Link"
             "nav_manga_studio" -> if (isKn) "ಮಂಗಾ ಸ್ಟೋರಿ ಸ್ಟುಡಿಯೋ" else "Manga Story Studio"
+            "nav_api_settings" -> if (isKn) "API ಕೀ ಸೆಟ್ಟಿಂಗ್ಸ್" else "API Settings"
             "nav_settings" -> if (isKn) "ಸೆಟ್ಟಿಂಗ್ಸ್" else "Settings"
 
             // Quick Actions Bar

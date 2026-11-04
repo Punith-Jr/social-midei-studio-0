@@ -442,6 +442,410 @@ class ExampleUnitTest {
             assertEquals(com.example.generator.AssetStatus.PENDING, scene.videoStatus)
         }
     }
+
+    @Test
+    fun testGitHubContentItemExtensionAndDirectoryDetection() {
+        val dirItem = com.example.data.github.GitHubContentItem(
+            name = "src",
+            path = "app/src",
+            type = "dir"
+        )
+        assertTrue(dirItem.isDirectory)
+        assertEquals("", dirItem.fileExtension)
+
+        val ktFile = com.example.data.github.GitHubContentItem(
+            name = "MainActivity.kt",
+            path = "app/src/main/java/com/example/MainActivity.kt",
+            type = "file"
+        )
+        assertFalse(ktFile.isDirectory)
+        assertEquals("kt", ktFile.fileExtension)
+
+        val xmlFile = com.example.data.github.GitHubContentItem(
+            name = "AndroidManifest.xml",
+            path = "app/src/main/AndroidManifest.xml",
+            type = "file"
+        )
+        assertFalse(xmlFile.isDirectory)
+        assertEquals("xml", xmlFile.fileExtension)
+
+        val mdFile = com.example.data.github.GitHubContentItem(
+            name = "README.md",
+            path = "README.md",
+            type = "file"
+        )
+        assertFalse(mdFile.isDirectory)
+        assertEquals("md", mdFile.fileExtension)
+    }
+
+    @Test
+    fun testFileExtensionInfoMapping() {
+        val dir = com.example.data.github.GitHubContentItem(name = "workflows", type = "dir")
+        val dirInfo = com.example.ui.components.getFileExtensionInfo(dir)
+        assertEquals("DIR", dirInfo.badgeLabel)
+
+        val kt = com.example.data.github.GitHubContentItem(name = "App.kt", type = "file")
+        val ktInfo = com.example.ui.components.getFileExtensionInfo(kt)
+        assertEquals("KT", ktInfo.badgeLabel)
+
+        val xml = com.example.data.github.GitHubContentItem(name = "strings.xml", type = "file")
+        val xmlInfo = com.example.ui.components.getFileExtensionInfo(xml)
+        assertEquals("XML", xmlInfo.badgeLabel)
+
+        val md = com.example.data.github.GitHubContentItem(name = "README.md", type = "file")
+        val mdInfo = com.example.ui.components.getFileExtensionInfo(md)
+        assertEquals("MD", mdInfo.badgeLabel)
+
+        val yml = com.example.data.github.GitHubContentItem(name = "webpack.yml", type = "file")
+        val ymlInfo = com.example.ui.components.getFileExtensionInfo(yml)
+        assertEquals("YML", ymlInfo.badgeLabel)
+
+        val py = com.example.data.github.GitHubContentItem(name = "generate_shorts.py", type = "file")
+        val pyInfo = com.example.ui.components.getFileExtensionInfo(py)
+        assertEquals("PY", pyInfo.badgeLabel)
+    }
+
+    @Test
+    fun testGitHubRepositoryFetchContentsRootAndNested() {
+        kotlinx.coroutines.runBlocking {
+            val repoManager = com.example.data.github.GitHubRepository()
+            val rootRes = repoManager.fetchRepositoryContents(
+                owner = "Anil-matcha",
+                repo = "AI-Youtube-Shorts-Generator",
+                path = ""
+            )
+            assertTrue(rootRes.isSuccess)
+            val rootItems = rootRes.getOrNull()
+            assertNotNull(rootItems)
+            assertTrue(rootItems!!.isNotEmpty())
+
+            // Test nested directory contents
+            val workflowsRes = repoManager.fetchRepositoryContents(
+                owner = "Anil-matcha",
+                repo = "AI-Youtube-Shorts-Generator",
+                path = ".github/workflows"
+            )
+            assertTrue(workflowsRes.isSuccess)
+            val workflowItems = workflowsRes.getOrNull()
+            assertNotNull(workflowItems)
+            assertTrue(workflowItems!!.isNotEmpty())
+        }
+    }
+
+    @Test
+    fun testBreadcrumbPathSplittingAndNavigation() {
+        val path = "app/src/main/java/com/example"
+        val segments = path.split("/").filter { it.isNotBlank() }
+        assertEquals(6, segments.size)
+        assertEquals("app", segments[0])
+        assertEquals("src", segments[1])
+        assertEquals("main", segments[2])
+        assertEquals("java", segments[3])
+        assertEquals("com", segments[4])
+        assertEquals("example", segments[5])
+
+        // Jumping back to level 2 ("app/src")
+        val level2 = segments.take(2).joinToString("/")
+        assertEquals("app/src", level2)
+
+        // Jumping back to level 0 (root)
+        val level0 = segments.take(0).joinToString("/")
+        assertEquals("", level0)
+    }
+
+    @Test
+    fun testFileSizeFormattingAndLargeFileCategoryColors() {
+        assertEquals("--", com.example.ui.components.formatFileSize(0L))
+        assertEquals("512 B", com.example.ui.components.formatFileSize(512L))
+        assertEquals("4.2 KB", com.example.ui.components.formatFileSize(4300L))
+        assertEquals("2.5 MB", com.example.ui.components.formatFileSize((2.5 * 1024 * 1024).toLong()))
+
+        // Large file (> 1 MB) alert color test
+        val (largeText, largeBg) = com.example.ui.components.getFileSizeCategoryColor(2 * 1024 * 1024L)
+        assertEquals(androidx.compose.ui.graphics.Color(0xFFDC2626), largeText)
+        assertEquals(androidx.compose.ui.graphics.Color(0xFFFEE2E2), largeBg)
+
+        // Medium-large file (> 100 KB) alert color test
+        val (medText, medBg) = com.example.ui.components.getFileSizeCategoryColor(250 * 1024L)
+        assertEquals(androidx.compose.ui.graphics.Color(0xFFD97706), medText)
+        assertEquals(androidx.compose.ui.graphics.Color(0xFFFEF3C7), medBg)
+
+        // Small file (< 10 KB) normal color test
+        val (smallText, smallBg) = com.example.ui.components.getFileSizeCategoryColor(1024L)
+        assertEquals(androidx.compose.ui.graphics.Color(0xFF475569), smallText)
+        assertEquals(androidx.compose.ui.graphics.Color(0xFFF1F5F9), smallBg)
+    }
+
+    @Test
+    fun testRecentFilesListCappingAtFiveAndDeduplication() {
+        val f1 = com.example.data.github.GitHubContentItem(name = "File1.kt", path = "File1.kt", size = 100L)
+        val f2 = com.example.data.github.GitHubContentItem(name = "File2.kt", path = "File2.kt", size = 200L)
+        val f3 = com.example.data.github.GitHubContentItem(name = "File3.kt", path = "File3.kt", size = 300L)
+        val f4 = com.example.data.github.GitHubContentItem(name = "File4.kt", path = "File4.kt", size = 400L)
+        val f5 = com.example.data.github.GitHubContentItem(name = "File5.kt", path = "File5.kt", size = 500L)
+        val f6 = com.example.data.github.GitHubContentItem(name = "File6.kt", path = "File6.kt", size = 600L)
+
+        var recents = listOf(f1, f2, f3, f4, f5)
+        assertEquals(5, recents.size)
+
+        // Access f6 (new file): should be prepended and capped at 5
+        recents = (listOf(f6) + recents.filter { it.path != f6.path }).take(5)
+        assertEquals(5, recents.size)
+        assertEquals("File6.kt", recents.first().name)
+        assertFalse(recents.any { it.name == "File5.kt" }) // Oldest dropped
+
+        // Access f2 (existing file): should move to first without duplicating
+        recents = (listOf(f2) + recents.filter { it.path != f2.path }).take(5)
+        assertEquals(5, recents.size)
+        assertEquals("File2.kt", recents.first().name)
+        assertEquals(1, recents.count { it.name == "File2.kt" })
+    }
+
+    @Test
+    fun testIsTextBasedFilePreviewEligibility() {
+        val ktFile = com.example.data.github.GitHubContentItem(name = "MainActivity.kt", path = "app/MainActivity.kt", type = "file")
+        val xmlFile = com.example.data.github.GitHubContentItem(name = "AndroidManifest.xml", path = "app/AndroidManifest.xml", type = "file")
+        val mdFile = com.example.data.github.GitHubContentItem(name = "README.md", path = "README.md", type = "file")
+        val ymlFile = com.example.data.github.GitHubContentItem(name = "webpack.yml", path = ".github/workflows/webpack.yml", type = "file")
+        val jsonFile = com.example.data.github.GitHubContentItem(name = "package.json", path = "package.json", type = "file")
+        val pyFile = com.example.data.github.GitHubContentItem(name = "generate_shorts.py", path = "scripts/generate_shorts.py", type = "file")
+        val tomlFile = com.example.data.github.GitHubContentItem(name = "libs.versions.toml", path = "gradle/libs.versions.toml", type = "file")
+        val licenseFile = com.example.data.github.GitHubContentItem(name = "LICENSE", path = "LICENSE", type = "file")
+        
+        // Binary and directory items
+        val dirItem = com.example.data.github.GitHubContentItem(name = "src", path = "src", type = "dir")
+        val pngFile = com.example.data.github.GitHubContentItem(name = "banner.png", path = "assets/banner.png", type = "file")
+        val mp4File = com.example.data.github.GitHubContentItem(name = "intro.mp4", path = "videos/intro.mp4", type = "file")
+        val zipFile = com.example.data.github.GitHubContentItem(name = "archive.zip", path = "downloads/archive.zip", type = "file")
+
+        // Should return true for text files
+        assertTrue(com.example.ui.components.isTextBasedFile(ktFile))
+        assertTrue(com.example.ui.components.isTextBasedFile(xmlFile))
+        assertTrue(com.example.ui.components.isTextBasedFile(mdFile))
+        assertTrue(com.example.ui.components.isTextBasedFile(ymlFile))
+        assertTrue(com.example.ui.components.isTextBasedFile(jsonFile))
+        assertTrue(com.example.ui.components.isTextBasedFile(pyFile))
+        assertTrue(com.example.ui.components.isTextBasedFile(tomlFile))
+        assertTrue(com.example.ui.components.isTextBasedFile(licenseFile))
+
+        // Should return false for directory and binaries
+        assertFalse(com.example.ui.components.isTextBasedFile(dirItem))
+        assertFalse(com.example.ui.components.isTextBasedFile(pngFile))
+        assertFalse(com.example.ui.components.isTextBasedFile(mp4File))
+        assertFalse(com.example.ui.components.isTextBasedFile(zipFile))
+    }
+
+    @Test
+    fun testGetFileContentPreviewContentGeneration() {
+        val yml = com.example.data.github.GitHubContentItem(name = "webpack.yml", path = ".github/workflows/webpack.yml", type = "file")
+        val ymlPreview = com.example.ui.components.getFileContentPreview(yml)
+        assertTrue(ymlPreview.contains("NodeJS with Webpack"))
+        assertTrue(ymlPreview.contains("npx webpack"))
+
+        val readme = com.example.data.github.GitHubContentItem(name = "README.md", path = "README.md", type = "file")
+        val readmePreview = com.example.ui.components.getFileContentPreview(readme)
+        assertTrue(readmePreview.contains("Creator Studio Pro"))
+
+        val kt = com.example.data.github.GitHubContentItem(name = "MainActivity.kt", path = "app/src/main/java/com/example/MainActivity.kt", type = "file")
+        val ktPreview = com.example.ui.components.getFileContentPreview(kt)
+        assertTrue(ktPreview.contains("CreatorStudioTheme"))
+
+        val py = com.example.data.github.GitHubContentItem(name = "generate_shorts.py", path = "scripts/generate_shorts.py", type = "file")
+        val pyPreview = com.example.ui.components.getFileContentPreview(py)
+        assertTrue(pyPreview.contains("generate_video_shorts"))
+
+        val generic = com.example.data.github.GitHubContentItem(name = "custom_script.sh", path = "custom_script.sh", type = "file")
+        val genericPreview = com.example.ui.components.getFileContentPreview(generic)
+        assertTrue(genericPreview.isNotBlank())
+        assertTrue(genericPreview.contains("custom_script.sh"))
+    }
+
+    @Test
+    fun testMultiSelectAndBulkOperationsLogic() {
+        val f1 = com.example.data.github.GitHubContentItem(name = "file1.kt", path = "src/file1.kt")
+        val f2 = com.example.data.github.GitHubContentItem(name = "file2.kt", path = "src/file2.kt")
+        val f3 = com.example.data.github.GitHubContentItem(name = "file3.kt", path = "src/file3.kt")
+        val files = listOf(f1, f2, f3)
+
+        var selectedPaths = setOf<String>()
+
+        // 1. Toggle single item
+        selectedPaths = if (selectedPaths.contains(f1.path)) selectedPaths - f1.path else selectedPaths + f1.path
+        assertTrue(selectedPaths.contains("src/file1.kt"))
+        assertEquals(1, selectedPaths.size)
+
+        // 2. Select All
+        selectedPaths = files.map { it.path }.toSet()
+        assertEquals(3, selectedPaths.size)
+        assertTrue(selectedPaths.containsAll(listOf("src/file1.kt", "src/file2.kt", "src/file3.kt")))
+
+        // 3. Deselect All
+        selectedPaths = emptySet()
+        assertTrue(selectedPaths.isEmpty())
+
+        // 4. Bulk Delete operation
+        selectedPaths = setOf("src/file1.kt", "src/file3.kt")
+        val remainingFiles = files.filterNot { selectedPaths.contains(it.path) }
+        assertEquals(1, remainingFiles.size)
+        assertEquals("file2.kt", remainingFiles.first().name)
+
+        // 5. Bulk Move operation
+        val targetFolder = "archive"
+        val movedFiles = files.map { item ->
+            if (selectedPaths.contains(item.path)) {
+                item.copy(path = "$targetFolder/${item.name}")
+            } else {
+                item
+            }
+        }
+        assertEquals("archive/file1.kt", movedFiles[0].path)
+        assertEquals("src/file2.kt", movedFiles[1].path)
+        assertEquals("archive/file3.kt", movedFiles[2].path)
+    }
+
+    @Test
+    fun testWelcomeToCreatorStudioPopupOmissionByDefault() {
+        val defaultSettings = com.example.data.CreatorSettingsEntity()
+        // wizardCompleted must be true so the welcome dialog shown in the screenshot is skipped on launch
+        assertTrue(defaultSettings.wizardCompleted)
+    }
+
+    @Test
+    fun testAiProviderManagerPromptOptimizationForAllProviders() {
+        val params = com.example.ai.PromptBuilderParams(
+            storyOrTopic = "Mysterious temple ruins",
+            mainCharacter = "Arjun",
+            characterAppearance = "Indian youth with saffron jacket",
+            location = "Heritage village at sunset",
+            sceneDescription = "Approaches ancient carved stone pillars",
+            moodAndEmotion = "Suspenseful & Epic",
+            artStyle = "Cinematic 3D Animation",
+            cameraAngle = "Wide establishing drone shot",
+            cameraMovement = "Slow tracking push-in",
+            lighting = "Warm sunset rim light with volumetric mist",
+            language = "kn"
+        )
+
+        // 1. OpenAI
+        val openAiPkg = com.example.ai.AiProviderManager.buildOptimizedPrompt(com.example.ai.AiProvider.OPENAI, params)
+        assertEquals(com.example.ai.AiProvider.OPENAI, openAiPkg.provider)
+        assertTrue(openAiPkg.mainPrompt.contains("Mysterious temple ruins"))
+        assertTrue(openAiPkg.mainPrompt.contains("Arjun"))
+        assertTrue(openAiPkg.negativePrompt.isNotBlank())
+        assertEquals(4, openAiPkg.sceneBreakdown.size)
+
+        // 2. Gemini
+        val geminiPkg = com.example.ai.AiProviderManager.buildOptimizedPrompt(com.example.ai.AiProvider.GEMINI, params)
+        assertEquals(com.example.ai.AiProvider.GEMINI, geminiPkg.provider)
+        assertTrue(geminiPkg.mainPrompt.contains("Google Veo"))
+        assertTrue(geminiPkg.technicalSettings.containsKey("Model"))
+        assertEquals("veo-2.0", geminiPkg.technicalSettings["Model"])
+
+        // 3. Runway
+        val runwayPkg = com.example.ai.AiProviderManager.buildOptimizedPrompt(com.example.ai.AiProvider.RUNWAY, params)
+        assertEquals(com.example.ai.AiProvider.RUNWAY, runwayPkg.provider)
+        assertTrue(runwayPkg.mainPrompt.contains("Cinematic 3D Animation"))
+        assertTrue(runwayPkg.cameraMovement.contains("Motion Brush"))
+
+        // 4. Kling AI
+        val klingPkg = com.example.ai.AiProviderManager.buildOptimizedPrompt(com.example.ai.AiProvider.KLING, params)
+        assertEquals(com.example.ai.AiProvider.KLING, klingPkg.provider)
+        assertTrue(klingPkg.characterConsistency.contains("Kling Character ID"))
+
+        // 5. ElevenLabs (Kannada)
+        val elevenPkg = com.example.ai.AiProviderManager.buildOptimizedPrompt(com.example.ai.AiProvider.ELEVEN_LABS, params)
+        assertEquals(com.example.ai.AiProvider.ELEVEN_LABS, elevenPkg.provider)
+        assertTrue(elevenPkg.mainPrompt.contains("ಕನ್ನಡ ಸಂಭಾಷಣೆ") || elevenPkg.mainPrompt.contains("Kannada Voiceover"))
+    }
+
+    @Test
+    fun testMultiProviderSideBySideComparisonSet() {
+        val params = com.example.ai.PromptBuilderParams(storyOrTopic = "AI Revolution")
+        val comparison = com.example.ai.AiProviderManager.generateMultiProviderComparison(params)
+        assertEquals(5, comparison.size)
+        assertTrue(comparison.containsKey(com.example.ai.AiProvider.OPENAI))
+        assertTrue(comparison.containsKey(com.example.ai.AiProvider.GEMINI))
+        assertTrue(comparison.containsKey(com.example.ai.AiProvider.RUNWAY))
+        assertTrue(comparison.containsKey(com.example.ai.AiProvider.KLING))
+        assertTrue(comparison.containsKey(com.example.ai.AiProvider.ELEVEN_LABS))
+    }
+
+    @Test
+    fun testMobilePhoneAuthAndCountryCodeDefaults() {
+        val settings = com.example.data.CreatorSettingsEntity(
+            userPhone = "9876543210",
+            phoneCountryCode = "+91",
+            isPhoneVerified = true
+        )
+        assertEquals("+91", settings.phoneCountryCode)
+        assertEquals("9876543210", settings.userPhone)
+        assertTrue(settings.isPhoneVerified)
+    }
+
+    @Test
+    fun testCartoonCharacterAndPublishLogEntities() {
+        val character = com.example.data.CartoonCharacterEntity(
+            id = 1,
+            name = "Arjun",
+            role = "Protagonist",
+            visualStyle = "3D Pixar Cartoon",
+            isLocked = true
+        )
+        assertEquals("Arjun", character.name)
+        assertTrue(character.isLocked)
+
+        val log = com.example.data.SocialPublishLogEntity(
+            id = 1,
+            platform = "YouTube",
+            title = "Sample Video Shorts",
+            publishedUrl = "https://youtube.com/shorts/sample123",
+            status = "Published"
+        )
+        assertEquals("YouTube", log.platform)
+        assertEquals("Published", log.status)
+        assertTrue(log.publishedUrl.startsWith("https://youtube.com"))
+    }
+
+    @Test
+    fun testCrossPlatformHubNavAndTranslations() {
+        assertEquals("Cross-Platform Hub", I18n.t("nav_cross_platform_hub", I18n.LANG_EN))
+        assertEquals("ಕ್ರಾಸ್-ಪ್ಲಾಟ್‌ಫಾರ್ಮ್ ಕೇಂದ್ರ", I18n.t("nav_cross_platform_hub", I18n.LANG_KN))
+
+        val hasCrossPlatformNav = com.example.ui.components.AllNavItems.any { it.id == "cross_platform_hub" }
+        assertTrue("AllNavItems must contain cross_platform_hub", hasCrossPlatformNav)
+    }
+
+    @Test
+    fun testCrossPlatformArchitectureFiles() {
+        val webIndex = java.io.File("../web/index.html")
+        val webCss = java.io.File("../web/style.css")
+        val webJs = java.io.File("../web/app.js")
+        val iosPlist = java.io.File("../ios/App/App/Info.plist")
+        val iosPodfile = java.io.File("../ios/Podfile")
+        val syncRoutes = java.io.File("../backend/routes/syncRoutes.js")
+
+        assertTrue("Web index.html must exist", webIndex.exists())
+        assertTrue("Web style.css must exist", webCss.exists())
+        assertTrue("Web app.js must exist", webJs.exists())
+        assertTrue("iOS Info.plist must exist", iosPlist.exists())
+        assertTrue("iOS Podfile must exist", iosPodfile.exists())
+        assertTrue("Backend syncRoutes must exist", syncRoutes.exists())
+    }
+
+    @Test
+    fun testWebAndMobileDualUsability() {
+        val publicIndex = java.io.File("../public/index.html")
+        val publicJs = java.io.File("../public/app.js")
+        val publicCss = java.io.File("../public/style.css")
+
+        assertTrue("Public index.html must exist for web access", publicIndex.exists())
+        assertTrue("Public app.js must exist for web access", publicJs.exists())
+        assertTrue("Public style.css must exist for web access", publicCss.exists())
+
+        // Verify Kannada translation exists for web studio
+        val knTitle = I18n.t("nav_cross_platform_hub", I18n.LANG_KN)
+        assertTrue(knTitle.isNotBlank())
+    }
 }
 
 

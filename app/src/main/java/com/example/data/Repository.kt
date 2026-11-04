@@ -167,6 +167,32 @@ class CreatorRepository(private val db: AppDatabase) {
     suspend fun clearCachedGitHubRepos() = db.gitHubRepoDao().clearAllRepos()
 
     suspend fun getCachedRepoById(id: Long): CachedGitHubRepoEntity? = db.gitHubRepoDao().getRepoById(id)
+
+    // Cartoon Characters
+    val cartoonCharacters: Flow<List<CartoonCharacterEntity>> = db.cartoonCharacterDao().getAllCharacters()
+
+    suspend fun addCartoonCharacter(char: CartoonCharacterEntity): Long = db.cartoonCharacterDao().insertCharacter(char)
+
+    suspend fun updateCartoonCharacter(char: CartoonCharacterEntity) = db.cartoonCharacterDao().updateCharacter(char)
+
+    suspend fun deleteCartoonCharacter(char: CartoonCharacterEntity) = db.cartoonCharacterDao().deleteCharacter(char)
+
+    // Social Publish Logs
+    val socialPublishLogs: Flow<List<SocialPublishLogEntity>> = db.socialPublishLogDao().getAllPublishLogs()
+
+    suspend fun addSocialPublishLog(log: SocialPublishLogEntity): Long = db.socialPublishLogDao().insertLog(log)
+
+    suspend fun deletePublishLogById(id: Long) = db.socialPublishLogDao().deleteLogById(id)
+
+    suspend fun clearAllPublishLogs() = db.socialPublishLogDao().clearAllLogs()
+
+    // AI Prompt Items
+    val aiPromptItems: Flow<List<AiPromptItemEntity>> = db.aiPromptItemDao().getAllPrompts()
+
+    suspend fun addAiPromptItem(item: AiPromptItemEntity): Long = db.aiPromptItemDao().insertPrompt(item)
+
+    suspend fun deleteAiPromptItem(item: AiPromptItemEntity) = db.aiPromptItemDao().deletePrompt(item)
 }
+
 
 

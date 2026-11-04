@@ -13,7 +13,7 @@ data class CreatorSettingsEntity(
     val channelName: String = "My Creator Channel",
     val defaultLanguage: String = "en",
     val theme: String = "dark",
-    val wizardCompleted: Boolean = false,
+    val wizardCompleted: Boolean = true,
     val youtubeSubscribers: Int = 12500,
     val instagramFollowers: Int = 8400,
     val facebookFollowers: Int = 5100,
@@ -29,6 +29,10 @@ data class CreatorSettingsEntity(
     val instagramHandle: String = "@creator_official",
     val isFacebookConnected: Boolean = false,
     val facebookPageName: String = "Creator Studio Community",
+    // Mobile OTP Authentication fields
+    val userPhone: String = "",
+    val isPhoneVerified: Boolean = false,
+    val phoneCountryCode: String = "+91",
     // GitHub Data Link fields
     val isGitHubConnected: Boolean = true,
     val gitHubUsername: String = "Anil-matcha",
@@ -39,9 +43,24 @@ data class CreatorSettingsEntity(
     val gitHubAvatarUrl: String = "https://avatars.githubusercontent.com/u/Anil-matcha",
     val gitHubBio: String = "AI-Youtube-Shorts-Generator: Automated text-to-shorts AI video generator pipeline with subtitles and audio (Anil-matcha/AI-Youtube-Shorts-Generator)",
     val gitHubPublicRepos: Int = 24,
-    // AI Pipeline Credentials
+    // AI Pipeline Credentials & Multi-AI Providers
     val geminiApiKey: String = "",
-    val ffmpegPath: String = "builtin"
+    val openaiApiKey: String = "",
+    val runwayApiKey: String = "",
+    val klingApiKey: String = "",
+    val elevenLabsApiKey: String = "",
+    val customAiEndpoint: String = "",
+    val customAiApiKey: String = "",
+    val activeAiProvider: String = "gemini",
+    val ffmpegPath: String = "builtin",
+    // Social Publishing Authorization
+    val youtubePublishingAuthorized: Boolean = false,
+    val facebookPublishingAuthorized: Boolean = false,
+    val facebookSelectedPageId: String = "",
+    val facebookSelectedPageName: String = "Creator Studio Community",
+    val instagramPublishingAuthorized: Boolean = false,
+    val instagramAccountId: String = "",
+    val instagramAccountType: String = "Creator / Professional"
 )
 
 @Entity(tableName = "calendar_tasks")
@@ -232,6 +251,56 @@ data class CachedGitHubRepoEntity(
     val size: Int = 0,
     val cachedAt: Long = System.currentTimeMillis()
 )
+
+@Entity(tableName = "cartoon_characters")
+data class CartoonCharacterEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val name: String,
+    val role: String = "Protagonist", // "Protagonist", "Antagonist", "Companion", "Mentor"
+    val visualStyle: String = "3D Pixar Cartoon", // "3D Pixar Cartoon", "2D Traditional", "Anime", "Comic"
+    val frontViewUrl: String = "",
+    val sideViewUrl: String = "",
+    val backViewUrl: String = "",
+    val expressions: String = "Happy, Curious, Determined, Shocked",
+    val clothingDetails: String = "Traditional Indian vest with modern creator jacket",
+    val personality: String = "Adventurous, clever, and kind-hearted",
+    val promptConsistencyNotes: String = "Preserve consistent hair style, sharp eyes, and color palette across all scenes",
+    val isLocked: Boolean = true,
+    val createdAt: Long = System.currentTimeMillis()
+)
+
+@Entity(tableName = "social_publish_logs")
+data class SocialPublishLogEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val platform: String, // "YouTube", "Facebook", "Instagram"
+    val title: String,
+    val caption: String = "",
+    val hashtags: String = "",
+    val videoUrl: String = "",
+    val publishedUrl: String = "",
+    val channelOrPageName: String = "",
+    val status: String = "Published", // "Published", "Queued", "Processing", "Failed"
+    val errorMessage: String = "",
+    val uploadProgress: Int = 100,
+    val timestamp: Long = System.currentTimeMillis()
+)
+
+@Entity(tableName = "ai_prompt_items")
+data class AiPromptItemEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val title: String,
+    val provider: String = "Gemini", // "OpenAI", "Gemini", "Runway", "Kling", "ElevenLabs", "Custom"
+    val category: String = "Video Prompt", // "Video Prompt", "Image Prompt", "Cartoon", "Audio", "Shorts"
+    val mainPrompt: String,
+    val negativePrompt: String = "",
+    val cameraMovement: String = "",
+    val visualStyle: String = "",
+    val audioMood: String = "",
+    val characterConsistency: String = "",
+    val isFavorite: Boolean = false,
+    val createdAt: Long = System.currentTimeMillis()
+)
+
 
 
 

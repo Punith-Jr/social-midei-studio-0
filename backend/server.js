@@ -16,22 +16,36 @@ import { uploadToYouTube } from './services/youtubeUploader.js';
 import authRoutes from './routes/authRoutes.js';
 import videoRoutes from './routes/videoRoutes.js';
 
+import syncRoutes from './routes/syncRoutes.js';
+
 dotenv.config();
 const app = express();
 
 app.use(express.json());
 app.use(cors());
 
+// Serve static web application for Windows, Mac, Linux and mobile browsers
+const possibleWebPaths = [
+  path.join(process.cwd(), '../web'),
+  path.join(process.cwd(), 'web'),
+  path.join(process.cwd(), '../public'),
+  path.join(process.cwd(), 'public')
+];
+const webPath = possibleWebPaths.find(p => fs.existsSync(p)) || path.join(process.cwd(), '../web');
+app.use(express.static(webPath));
+app.use('/web', express.static(webPath));
+
 app.use('/api', authRoutes);
 app.use('/api', videoRoutes);
+app.use('/api/sync', syncRoutes);
 
 // Root Health Check Route
-app.get('/', (req, res) => {
+app.get('/api/health', (req, res) => {
   res.json({
-    app: "Creator Studio Automated 10-Minute Video Generator & Uploader",
+    app: "Creator Studio Pro Universal Cross-Platform Engine",
     status: "running",
-    loop: "every 10 minutes",
-    supportedPlatforms: ["YouTube Shorts", "Instagram Reels", "Facebook Videos"]
+    platforms: ["Web Desktop/Browser", "Android App", "iOS App"],
+    supportedEngines: ["Gemini Pro", "OpenAI", "Runway Gen-3", "Kling AI", "ElevenLabs"]
   });
 });
 
@@ -151,19 +165,19 @@ cron.schedule('*/10 * * * *', async () => {
 // ----------------------------------------------------
 // ಡೇಟಾಬೇಸ್ ಕನೆಕ್ಷನ್ ಮತ್ತು ಸರ್ವರ್ ಸ್ಟಾರ್ಟ್
 // ----------------------------------------------------
-const PORT = process.env.PORT || 5000;
+const PORT = 3000;
 const mongoUri = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/creator_studio";
 
-mongoose.connect(mongoUri)
+// Start HTTP Server immediately on PORT 3000 to serve web and APIs
+app.listen(PORT, () => {
+  console.log(`🚀 Creator Studio Pro Web & API Server is live at: http://localhost:${PORT}`);
+});
+
+// Asynchronous MongoDB connection attempt
+mongoose.connect(mongoUri, { serverSelectionTimeoutMS: 2000 })
   .then(() => {
     console.log('🗄️ MongoDB ಡೇಟಾಬೇಸ್ ಯಶಸ್ವಿಯಾಗಿ ಕನೆಕ್ಟ್ ಆಗಿದೆ.');
-    app.listen(PORT, () => {
-      console.log(`🚀 ಸರ್ವರ್ ಈ ಪೋರ್ಟ್ನಲ್ಲಿ ರನ್ ಆಗುತ್ತಿದೆ: http://localhost:${PORT}`);
-    });
   })
   .catch((err) => {
-    console.warn('⚠️ MongoDB ಕನೆಕ್ಷನ್ ಲಭ್ಯವಿಲ್ಲ, ಸರ್ವರ್ ಲೋಕಲ್ ಮೋಡ್‌ನಲ್ಲಿ ಸ್ಟಾರ್ಟ್ ಆಗುತ್ತಿದೆ:', err.message);
-    app.listen(PORT, () => {
-      console.log(`🚀 ಸರ್ವರ್ ಲೋಕಲ್ ಪೋರ್ಟ್ನಲ್ಲಿ ರನ್ ಆಗುತ್ತಿದೆ: http://localhost:${PORT}`);
-    });
+    console.warn('⚠️ MongoDB ಕನೆಕ್ಷನ್ ಲಭ್ಯವಿಲ್ಲ (Offline/In-memory fallback mode active):', err.message);
   });

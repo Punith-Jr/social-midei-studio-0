@@ -132,3 +132,19 @@ data class GitHubActivityHistory(
     val weeks: List<GitHubActivityWeek> = emptyList()
 )
 
+@JsonClass(generateAdapter = true)
+data class GitHubContentItem(
+    val name: String = "",
+    val path: String = "",
+    val sha: String = "",
+    val size: Long = 0L,
+    val url: String = "",
+    @Json(name = "html_url") val htmlUrl: String? = null,
+    @Json(name = "download_url") val downloadUrl: String? = null,
+    val type: String = "file" // "file", "dir", "symlink", "submodule"
+) {
+    val isDirectory: Boolean get() = type == "dir"
+    val fileExtension: String get() = if (isDirectory) "" else name.substringAfterLast('.', "").lowercase()
+}
+
+

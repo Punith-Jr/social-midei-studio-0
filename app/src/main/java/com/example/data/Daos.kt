@@ -261,5 +261,48 @@ interface GitHubRepoDao {
     suspend fun deleteRepoById(id: Long)
 }
 
+@Dao
+interface CartoonCharacterDao {
+    @Query("SELECT * FROM cartoon_characters ORDER BY createdAt DESC")
+    fun getAllCharacters(): Flow<List<CartoonCharacterEntity>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertCharacter(character: CartoonCharacterEntity): Long
+
+    @Update
+    suspend fun updateCharacter(character: CartoonCharacterEntity)
+
+    @Delete
+    suspend fun deleteCharacter(character: CartoonCharacterEntity)
+}
+
+@Dao
+interface SocialPublishLogDao {
+    @Query("SELECT * FROM social_publish_logs ORDER BY timestamp DESC")
+    fun getAllPublishLogs(): Flow<List<SocialPublishLogEntity>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertLog(log: SocialPublishLogEntity): Long
+
+    @Query("DELETE FROM social_publish_logs WHERE id = :id")
+    suspend fun deleteLogById(id: Long)
+
+    @Query("DELETE FROM social_publish_logs")
+    suspend fun clearAllLogs()
+}
+
+@Dao
+interface AiPromptItemDao {
+    @Query("SELECT * FROM ai_prompt_items ORDER BY createdAt DESC")
+    fun getAllPrompts(): Flow<List<AiPromptItemEntity>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertPrompt(item: AiPromptItemEntity): Long
+
+    @Delete
+    suspend fun deletePrompt(item: AiPromptItemEntity)
+}
+
+
 
 
