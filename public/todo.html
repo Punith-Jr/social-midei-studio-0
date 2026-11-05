@@ -29,6 +29,24 @@
         <button class="add-button" type="submit"><span aria-hidden="true">+</span> Add task</button>
       </form>
 
+      <section class="ai-planner" aria-labelledby="ai-title">
+        <div class="ai-heading">
+          <span class="ai-spark" aria-hidden="true">✦</span>
+          <div>
+            <h2 id="ai-title">Plan it with ChatGPT</h2>
+            <p>Turn a goal into small, actionable tasks.</p>
+          </div>
+          <span class="ai-badge">AI</span>
+        </div>
+        <form id="ai-plan-form" class="ai-form">
+          <label class="visually-hidden" for="ai-goal">Describe what you want to get done</label>
+          <textarea id="ai-goal" maxlength="1000" rows="2" placeholder="e.g. Prepare for my biology exam next Friday" required></textarea>
+          <button type="submit" id="ai-plan-button"><span aria-hidden="true">✦</span> Make a plan</button>
+        </form>
+        <p id="ai-status" class="ai-status" role="status" aria-live="polite">AI planning needs an OpenAI API key configured on the backend.</p>
+        <ul id="ai-suggestions" class="ai-suggestions" aria-label="Suggested tasks" hidden></ul>
+      </section>
+
       <div class="list-toolbar">
         <p class="task-count" id="task-count" aria-live="polite">0 tasks left</p>
         <div class="filters" role="group" aria-label="Filter tasks">
@@ -50,7 +68,7 @@
         <button type="button" class="clear-button" id="clear-completed">Clear completed</button>
       </footer>
     </section>
-    <p class="privacy-note">Your tasks stay in this browser and are not uploaded to a server.</p>
+    <p class="privacy-note">Your tasks stay in this browser. AI planning sends your goal and task titles to the configured OpenAI service.</p>
   </main>
 </body>
 </html>
