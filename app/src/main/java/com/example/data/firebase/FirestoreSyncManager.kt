@@ -21,36 +21,45 @@ class FirestoreSyncManager(
     private val repository: CreatorRepository,
     private val scope: CoroutineScope
 ) {
-    private val auth: FirebaseAuth by lazy { FirebaseAuth.getInstance() }
+    // Firebase is optional for local/offline app startup. A debug build without
+    // google-services.json must not crash while resolving the user ID.
+    private val auth: FirebaseAuth? by lazy {
+        runCatching {
+            if (FirebaseApp.getApps(context).isEmpty()) null else FirebaseAuth.getInstance()
+        }.onFailure {
+            Log.w("FirestoreSyncManager", "Firebase Auth unavailable; continuing offline.", it)
+        }.getOrNull()
+    }
 
-    private val firestore: FirebaseFirestore by lazy {
-        try {
+    private val firestore: FirebaseFirestore? by lazy {
+        runCatching {
+            val app = FirebaseApp.getApps(context).firstOrNull() ?: return@runCatching null
             val dbId = context.getString(R.string.firestore_database_id)
-            if (dbId.isNotBlank()) {
-                FirebaseFirestore.getInstance(FirebaseApp.getInstance(), dbId)
-            } else {
-                FirebaseFirestore.getInstance()
-            }
-        } catch (e: Exception) {
-            Log.w("FirestoreSyncManager", "Falling back to default Firestore: ${e.message}")
-            FirebaseFirestore.getInstance()
-        }
+            if (dbId.isNotBlank()) FirebaseFirestore.getInstance(app, dbId)
+            else FirebaseFirestore.getInstance(app)
+        }.onFailure {
+            Log.w("FirestoreSyncManager", "Firestore unavailable; continuing offline.", it)
+        }.getOrNull()
     }
 
     private var repoListenerRegistration: ListenerRegistration? = null
     private var settingsListenerRegistration: ListenerRegistration? = null
 
     fun getEffectiveUserId(settings: CreatorSettingsEntity): String {
-        return auth.currentUser?.uid ?: settings.googleAccountId.ifBlank { "user_default_studio" }
+        return auth?.currentUser?.uid ?: settings.googleAccountId.ifBlank { "user_default_studio" }
     }
 
     fun startRealtimeSync(userId: String) {
         stopRealtimeSync()
         if (userId.isBlank()) return
+        val db = firestore ?: run {
+            Log.i("FirestoreSyncManager", "Firebase is not configured; skipping realtime sync.")
+            return
+        }
 
         // 1. Listen in real-time to /users/{userId}/github_repos
         try {
-            val reposRef = firestore.collection("users").document(userId).collection("github_repos")
+            val reposRef = db.collection("users").document(userId).collection("github_repos")
             repoListenerRegistration = reposRef.addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     Log.w("FirestoreSyncManager", "Real-time repos snapshot listener error: ${error.message}")
@@ -97,7 +106,7 @@ class FirestoreSyncManager(
 
         // 2. Listen in real-time to /users/{userId} for settings
         try {
-            val userRef = firestore.collection("users").document(userId)
+            val userRef = db.collection("users").document(userId)
             settingsListenerRegistration = userRef.addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     Log.w("FirestoreSyncManager", "Real-time user settings snapshot listener error: ${error.message}")
@@ -127,10 +136,11 @@ class FirestoreSyncManager(
 
     fun pushReposToFirestore(userId: String, repos: List<CachedGitHubRepoEntity>) {
         if (userId.isBlank() || repos.isEmpty()) return
+        val db = firestore ?: return
         scope.launch(Dispatchers.IO) {
             try {
-                val batch = firestore.batch()
-                val reposRef = firestore.collection("users").document(userId).collection("github_repos")
+                val batch = db.batch()
+                val reposRef = db.collection("users").document(userId).collection("github_repos")
                 for (repo in repos) {
                     val docRef = reposRef.document(repo.id.toString())
                     val data = mapOf(
@@ -163,9 +173,10 @@ class FirestoreSyncManager(
 
     fun pushSettingsToFirestore(userId: String, settings: CreatorSettingsEntity) {
         if (userId.isBlank()) return
+        val db = firestore ?: return
         scope.launch(Dispatchers.IO) {
             try {
-                val userRef = firestore.collection("users").document(userId)
+                val userRef = db.collection("users").document(userId)
                 val data = mapOf(
                     "userId" to userId,
                     "channelName" to settings.channelName,
