@@ -61,6 +61,25 @@ jobs:
         languages: ${{ matrix.language }}
         build-mode: ${{ matrix.build-mode }}
 
+    # The app's debugConfig signing config expects this file at the repository root.
+    # Generate an ephemeral CI-only key, matching the Android CI workflow; never use it for releases.
+    - name: Ensure Android debug keystore exists
+      if: matrix.language == 'java-kotlin'
+      shell: bash
+      run: |
+        if [[ ! -f debug.keystore ]]; then
+          keytool -genkeypair -v \\
+            -keystore debug.keystore \\
+            -storepass android \\
+            -alias androiddebugkey \\
+            -keypass android \\
+            -dname "CN=Android Debug,O=Android,C=US" \\
+            -keyalg RSA \\
+            -keysize 2048 \\
+            -validity 10000
+        fi
+        test -s debug.keystore
+
     - name: Build Android debug variant for CodeQL
       if: matrix.language == 'java-kotlin'
       shell: bash
