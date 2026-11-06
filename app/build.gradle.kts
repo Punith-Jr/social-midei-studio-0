@@ -8,6 +8,12 @@ plugins {
   alias(libs.plugins.google.services)
 }
 
+// Read production signing values without requiring them during debug builds.
+// Release tasks are validated after Gradle has constructed the task graph.
+val releaseKeystorePath = providers.environmentVariable("KEYSTORE_PATH")
+val releaseStorePassword = providers.environmentVariable("STORE_PASSWORD")
+val releaseKeyPassword = providers.environmentVariable("KEY_PASSWORD")
+
 android {
   namespace = "com.example"
   compileSdk { version = release(36) { minorApiLevel = 1 } }
@@ -24,11 +30,13 @@ android {
 
   signingConfigs {
     create("release") {
-      val keystorePath = System.getenv("KEYSTORE_PATH") ?: "${rootDir}/my-upload-key.jks"
-      storeFile = file(keystorePath)
-      storePassword = System.getenv("STORE_PASSWORD")
+      // No local/default keystore path: production signing must be explicit.
+      releaseKeystorePath.orNull?.takeIf { it.isNotBlank() }?.let {
+        storeFile = file(it)
+      }
+      storePassword = releaseStorePassword.orNull.orEmpty()
       keyAlias = "upload"
-      keyPassword = System.getenv("KEY_PASSWORD")
+      keyPassword = releaseKeyPassword.orNull.orEmpty()
     }
     create("debugConfig") {
       storeFile = file("${rootDir}/debug.keystore")
@@ -62,6 +70,31 @@ android {
   }
 }
 
+// Fail closed for every release variant, but do not require production secrets
+// for debug builds or debug unit tests.
+gradle.taskGraph.whenReady {
+  val releaseTasks = allTasks.filter {
+    it.project == project && it.name.contains("release", ignoreCase = true)
+  }
+
+  if (releaseTasks.isNotEmpty()) {
+    val missing = buildList {
+      if (releaseKeystorePath.orNull.isNullOrBlank()) add("KEYSTORE_PATH")
+      if (releaseStorePassword.orNull.isNullOrBlank()) add("STORE_PASSWORD")
+      if (releaseKeyPassword.orNull.isNullOrBlank()) add("KEY_PASSWORD")
+    }
+
+    check(missing.isEmpty()) {
+      "Release signing requires the following environment variables: ${missing.joinToString()}"
+    }
+
+    val keystore = file(releaseKeystorePath.get())
+    check(keystore.isFile && keystore.canRead()) {
+      "Release keystore does not exist or is not readable at KEYSTORE_PATH."
+    }
+  }
+}
+
 // Configure the Secrets Gradle Plugin to use .env and .env.example files
 // to match the convention used in Web projects.
 secrets {
@@ -73,7 +106,7 @@ secrets {
 googleServices { missingGoogleServicesStrategy = MissingGoogleServicesStrategy.WARN }
 
 // Some unused dependencies are commented out below instead of being removed.
-// This makes it easy to add them back in the future if needed.
+// This makes it easy to add them back in the future without deleting their configuration.
 dependencies {
   implementation(platform(libs.androidx.compose.bom))
   implementation(platform(libs.firebase.bom))
