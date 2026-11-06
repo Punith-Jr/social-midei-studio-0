@@ -108,6 +108,12 @@ jobs:
 
           echo "Upload keystore opened; alias upload exists; normalized certificate fingerprint matches."
 
+      - name: Run release unit tests
+        env:
+          STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+        run: ./gradlew --no-daemon --no-configuration-cache :app:testReleaseUnitTest
+
       - name: Build signed release Android App Bundle
         env:
           STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
