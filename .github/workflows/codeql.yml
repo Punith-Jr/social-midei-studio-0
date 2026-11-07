@@ -83,7 +83,7 @@ jobs:
     - name: Build Android debug variant for CodeQL
       if: matrix.language == 'java-kotlin'
       shell: bash
-      run: gradle --no-daemon :app:assembleDebug
+      run: gradle --no-daemon --no-build-cache clean :app:assembleDebug
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v4
