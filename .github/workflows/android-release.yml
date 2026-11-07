@@ -19,7 +19,6 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
     env:
-      KEYSTORE_PATH: ${{ runner.temp }}/upload-keystore.jks
       RELEASE_CERT_SHA256: ${{ vars.RELEASE_CERT_SHA256 }}
 
     steps:
@@ -44,6 +43,7 @@ jobs:
         id: validate-signing
         shell: bash
         env:
+          KEYSTORE_PATH: ${{ runner.temp }}/upload-keystore.jks
           RELEASE_KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
           STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
           KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
@@ -110,12 +110,14 @@ jobs:
 
       - name: Run release unit tests
         env:
+          KEYSTORE_PATH: ${{ runner.temp }}/upload-keystore.jks
           STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
           KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
         run: ./gradlew --no-daemon --no-configuration-cache :app:testReleaseUnitTest
 
       - name: Build signed release Android App Bundle
         env:
+          KEYSTORE_PATH: ${{ runner.temp }}/upload-keystore.jks
           STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
           KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
         run: ./gradlew --no-daemon --no-configuration-cache :app:bundleRelease
@@ -192,4 +194,6 @@ jobs:
       - name: Remove temporary signing material
         if: always()
         shell: bash
+        env:
+          KEYSTORE_PATH: ${{ runner.temp }}/upload-keystore.jks
         run: rm -f "${KEYSTORE_PATH:-}"
