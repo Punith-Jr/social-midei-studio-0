@@ -32,12 +32,16 @@ data class NavItem(
 
 val AllNavItems = listOf(
     NavItem("dashboard", "nav_dashboard", Icons.Default.Dashboard),
+    NavItem("cross_platform_hub", "nav_cross_platform_hub", Icons.Default.Devices, "ALL 3"),
+    NavItem("ai_prompt_studio", "nav_ai_prompt_studio", Icons.Default.Psychology, "MULTI-AI"),
     NavItem("story_to_video", "nav_story_to_video", Icons.Default.AutoAwesomeMotion, "AI PIPELINE"),
+    NavItem("cartoon_studio", "nav_cartoon_studio", Icons.Default.Animation, "CARTOON"),
     NavItem("auto_generator", "nav_auto_generator", Icons.Default.Bolt, "10-MIN"),
     NavItem("create_video", "nav_create_video", Icons.Default.MovieCreation),
     NavItem("shorts_reels", "nav_shorts_reels", Icons.Default.Smartphone),
     NavItem("script_gen", "nav_script_gen", Icons.Default.Create),
     NavItem("thumbnail_creator", "nav_thumbnail_creator", Icons.Default.Image),
+    NavItem("publishing_centre", "nav_publishing_centre", Icons.Default.CloudUpload, "PUBLISH"),
     NavItem("youtube", "nav_youtube", Icons.Default.PlayCircleFilled),
     NavItem("instagram", "nav_instagram", Icons.Default.CameraAlt),
     NavItem("facebook", "nav_facebook", Icons.Default.ThumbUp),
@@ -51,6 +55,7 @@ val AllNavItems = listOf(
     NavItem("opencreator_hub", "nav_opencreator_hub", Icons.Default.Hub, "28 PRESETS"),
     NavItem("manga_studio", "nav_manga_studio", Icons.Default.AutoStories, "MANGA + AI"),
     NavItem("github_link", "nav_github_link", Icons.Default.Code, "GIT SYNC"),
+    NavItem("api_settings", "nav_api_settings", Icons.Default.Key, "API KEYS"),
     NavItem("backup_restore", "nav_backup_restore", Icons.Default.Backup),
     NavItem("settings", "nav_settings", Icons.Default.Settings)
 )

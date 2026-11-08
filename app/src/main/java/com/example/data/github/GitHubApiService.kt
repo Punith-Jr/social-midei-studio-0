@@ -45,6 +45,23 @@ interface GitHubApiService {
         @Header("Authorization") authHeader: String? = null
     ): Response<GitHubRepo>
 
+    @GET("repos/{owner}/{repo}/contents")
+    suspend fun getRepositoryRootContents(
+        @Path("owner") owner: String,
+        @Path("repo") repo: String,
+        @Query("ref") ref: String? = null,
+        @Header("Authorization") authHeader: String? = null
+    ): Response<List<GitHubContentItem>>
+
+    @GET("repos/{owner}/{repo}/contents/{path}")
+    suspend fun getRepositoryPathContents(
+        @Path("owner") owner: String,
+        @Path("repo") repo: String,
+        @Path(value = "path", encoded = true) path: String,
+        @Query("ref") ref: String? = null,
+        @Header("Authorization") authHeader: String? = null
+    ): Response<List<GitHubContentItem>>
+
     @PUT("repos/{owner}/{repo}/contents/{path}")
     suspend fun commitFile(
         @Path("owner") owner: String,

@@ -1,11 +1,20 @@
 import { GoogleGenAI } from "@google/genai";
 
 // Initialize Gemini API with your Google AI Studio key
-const apiKey = process.env.GEMINI_API_KEY || "";
-const ai = new GoogleGenAI({ apiKey });
+function getAIClient() {
+  const apiKey = process.env.GEMINI_API_KEY || "";
+  if (!apiKey) return null;
+  try {
+    return new GoogleGenAI({ apiKey });
+  } catch (e) {
+    return null;
+  }
+}
 
 export async function generateVideoContent(topic, platform = "youtube", language = "en") {
   try {
+    const ai = getAIClient();
+    if (!ai) throw new Error("GEMINI_API_KEY not configured, using fallback generator");
     const isKn = language === "kn";
     const prompt = `
       Create a viral ${platform} short-form video script about: "${topic}".

@@ -21,9 +21,12 @@ import kotlinx.coroutines.launch
         VideoMetadataEntity::class,
         MangaStoryEntity::class,
         MangaChapterEntity::class,
-        CachedGitHubRepoEntity::class
+        CachedGitHubRepoEntity::class,
+        CartoonCharacterEntity::class,
+        SocialPublishLogEntity::class,
+        AiPromptItemEntity::class
     ],
-    version = 9,
+    version = 10,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -38,6 +41,9 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun mangaStoryDao(): MangaStoryDao
     abstract fun mangaChapterDao(): MangaChapterDao
     abstract fun gitHubRepoDao(): GitHubRepoDao
+    abstract fun cartoonCharacterDao(): CartoonCharacterDao
+    abstract fun socialPublishLogDao(): SocialPublishLogDao
+    abstract fun aiPromptItemDao(): AiPromptItemDao
 
     companion object {
         @Volatile
@@ -85,7 +91,7 @@ abstract class AppDatabase : RoomDatabase() {
                     channelName = "Creator Studio",
                     defaultLanguage = "en",
                     theme = "dark",
-                    wizardCompleted = false,
+                    wizardCompleted = true,
                     youtubeSubscribers = 24500,
                     instagramFollowers = 18200,
                     facebookFollowers = 9800,
@@ -107,6 +113,35 @@ abstract class AppDatabase : RoomDatabase() {
                     googleAccountName = "Not Logged In"
                 )
             )
+
+            // Starter Cartoon Character for Animation Studio
+            db.cartoonCharacterDao().insertCharacter(
+                CartoonCharacterEntity(
+                    id = 1,
+                    name = "Arjun",
+                    role = "Protagonist",
+                    visualStyle = "3D Pixar Cartoon",
+                    clothingDetails = "Saffron creator hoodie with denim joggers",
+                    personality = "Clever, curious Indian youth exploring AI mysteries",
+                    promptConsistencyNotes = "Maintain expressive hazel eyes, spiky hair, and warm skin tones across all scenes",
+                    isLocked = true
+                )
+            )
+
+            // Starter Social Publish Log
+            db.socialPublishLogDao().insertLog(
+                SocialPublishLogEntity(
+                    id = 1,
+                    platform = "YouTube",
+                    title = "AI Video Shorts in 60 Seconds - Complete Guide",
+                    caption = "Created and published with Creator Studio Pro AI Engine!",
+                    hashtags = "#Shorts #AI #CreatorStudio #VideoEditing",
+                    publishedUrl = "https://youtube.com/shorts/sample_ai_video",
+                    channelOrPageName = "@CreatorStudio",
+                    status = "Published"
+                )
+            )
+
 
             // Starter Calendar Tasks with Draft, Scheduled, Published
             calendarDao.insertTask(

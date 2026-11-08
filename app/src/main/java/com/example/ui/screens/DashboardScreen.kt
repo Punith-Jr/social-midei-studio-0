@@ -312,6 +312,69 @@ fun DashboardScreen(
                                 fontWeight = FontWeight.Black
                             )
                         }
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        // Quick Studio Launchers Row: AI Prompt Studio, Cartoon Studio, Publishing Centre
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Button(
+                                onClick = { onNavigate("ai_prompt_studio") },
+                                colors = ButtonDefaults.buttonColors(containerColor = StudioCrimson),
+                                shape = RoundedCornerShape(10.dp),
+                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
+                                modifier = Modifier.weight(1f).testTag("hero_ai_prompt_studio_button")
+                            ) {
+                                Icon(Icons.Default.Psychology, contentDescription = null, modifier = Modifier.size(15.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(if (isKn) "AI ಪ್ರಾಂಪ್ಟ್" else "AI Prompt Studio", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            }
+
+                            Button(
+                                onClick = { onNavigate("cartoon_studio") },
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF8B5CF6)),
+                                shape = RoundedCornerShape(10.dp),
+                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
+                                modifier = Modifier.weight(1f).testTag("hero_cartoon_studio_button")
+                            ) {
+                                Icon(Icons.Default.Animation, contentDescription = null, modifier = Modifier.size(15.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(if (isKn) "ಕಾರ್ಟೂನ್" else "Cartoon Studio", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            }
+
+                            Button(
+                                onClick = { onNavigate("publishing_centre") },
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2563EB)),
+                                shape = RoundedCornerShape(10.dp),
+                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
+                                modifier = Modifier.weight(1f).testTag("hero_publishing_centre_button")
+                            ) {
+                                Icon(Icons.Default.CloudUpload, contentDescription = null, modifier = Modifier.size(15.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(if (isKn) "ಪ್ರಕಾಶನ" else "Publish Centre", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        // Cross-Platform Ecosystem Hub Launcher (Website + Android + iOS)
+                        Button(
+                            onClick = { onNavigate("cross_platform_hub") },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0F172A)),
+                            shape = RoundedCornerShape(10.dp),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+                            modifier = Modifier.fillMaxWidth().testTag("hero_cross_platform_hub_button")
+                        ) {
+                            Icon(Icons.Default.Devices, contentDescription = null, modifier = Modifier.size(16.dp), tint = StudioAmber)
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = if (isKn) "💻 ಕ್ರಾಸ್-ಪ್ಲಾಟ್‌ಫಾರ್ಮ್ ಕೇಂದ್ರ (ವೆಬ್ • ಆಂಡ್ರಾಯ್ಡ್ • iOS)" else "💻 CROSS-PLATFORM HUB (WEB • ANDROID • IOS)",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                        }
                     }
                 }
             }

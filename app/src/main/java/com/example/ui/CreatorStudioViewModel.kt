@@ -83,6 +83,27 @@ class CreatorStudioViewModel(application: Application) : AndroidViewModel(applic
             initialValue = emptyList()
         )
 
+    val cartoonCharacters: StateFlow<List<CartoonCharacterEntity>> = repository.cartoonCharacters
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
+
+    val socialPublishLogs: StateFlow<List<SocialPublishLogEntity>> = repository.socialPublishLogs
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
+
+    val aiPromptItems: StateFlow<List<AiPromptItemEntity>> = repository.aiPromptItems
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
+
     // GitHub Integration & Synchronization Service
     private val gitHubRepository = com.example.data.github.GitHubRepository()
     private val firestoreSyncManager = com.example.data.firebase.FirestoreSyncManager(application, repository, viewModelScope)
@@ -1243,6 +1264,33 @@ class CreatorStudioViewModel(application: Application) : AndroidViewModel(applic
             _toastMessage.tryEmit("📋 Comprehensive Story Manuscript & Report compiled!")
             onComplete(updated)
         }
+    }
+
+    // Cartoon Character Library Methods
+    fun addCartoonCharacter(char: CartoonCharacterEntity) {
+        viewModelScope.launch { repository.addCartoonCharacter(char) }
+    }
+
+    fun deleteCartoonCharacter(char: CartoonCharacterEntity) {
+        viewModelScope.launch { repository.deleteCartoonCharacter(char) }
+    }
+
+    // Social Media Publishing Log Methods
+    fun addSocialPublishLog(log: SocialPublishLogEntity) {
+        viewModelScope.launch { repository.addSocialPublishLog(log) }
+    }
+
+    fun clearAllPublishLogs() {
+        viewModelScope.launch { repository.clearAllPublishLogs() }
+    }
+
+    // AI Prompt Items Methods
+    fun addAiPromptItem(item: AiPromptItemEntity) {
+        viewModelScope.launch { repository.addAiPromptItem(item) }
+    }
+
+    fun deleteAiPromptItem(item: AiPromptItemEntity) {
+        viewModelScope.launch { repository.deleteAiPromptItem(item) }
     }
 
     override fun onCleared() {
