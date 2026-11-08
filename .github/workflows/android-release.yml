@@ -20,6 +20,8 @@ jobs:
     environment: production
     env:
       KEYSTORE_PATH: ${{ runner.temp }}/upload-keystore.jks
+      STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
+      KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
       RELEASE_CERT_SHA256: ${{ vars.RELEASE_CERT_SHA256 }}
 
     steps:
@@ -44,7 +46,6 @@ jobs:
         shell: bash
         env:
           RELEASE_KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
-          STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
         run: |
           set -euo pipefail
 
@@ -87,9 +88,6 @@ jobs:
           echo "Upload keystore opened; alias exists; certificate fingerprint matches."
 
       - name: Build signed release Android App Bundle
-        env:
-          STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
-          KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
         run: ./gradlew --no-daemon --no-configuration-cache :app:bundleRelease
 
       - name: Verify signed AAB and embedded certificate fingerprint
