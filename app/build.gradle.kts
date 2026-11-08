@@ -19,25 +19,20 @@ android {
   compileSdk { version = release(36) { minorApiLevel = 1 } }
 
   defaultConfig {
-    // Validate non-null local values before assigning to nullable Android DSL properties.
-    val configuredApplicationId = providers.gradleProperty("APP_APPLICATION_ID").get()
-    val configuredVersionCode = providers.gradleProperty("APP_VERSION_CODE").get().toIntOrNull()
-      ?: error("APP_VERSION_CODE must be a positive integer.")
-    val configuredVersionName = providers.gradleProperty("APP_VERSION_NAME").get()
-
-    require(configuredApplicationId.matches(Regex("[A-Za-z][A-Za-z0-9_]*(\\.[A-Za-z][A-Za-z0-9_]*)+"))) {
-      "APP_APPLICATION_ID must be a valid, fully qualified Android application ID."
-    }
-    require(configuredVersionCode in 1..2_100_000_000) {
-      "APP_VERSION_CODE must be between 1 and 2100000000."
-    }
-    require(configuredVersionName.isNotBlank()) { "APP_VERSION_NAME must not be blank." }
-
-    applicationId = configuredApplicationId
+    applicationId = providers.gradleProperty("APP_APPLICATION_ID").get()
     minSdk = 24
     targetSdk = 36
-    versionCode = configuredVersionCode
-    versionName = configuredVersionName
+    versionCode = providers.gradleProperty("APP_VERSION_CODE").get().toIntOrNull()
+      ?: error("APP_VERSION_CODE must be a positive integer.")
+    versionName = providers.gradleProperty("APP_VERSION_NAME").get()
+
+    require(applicationId.matches(Regex("[A-Za-z][A-Za-z0-9_]*(\\.[A-Za-z][A-Za-z0-9_]*)+"))) {
+      "APP_APPLICATION_ID must be a valid, fully qualified Android application ID."
+    }
+    require(versionCode in 1..2_100_000_000) {
+      "APP_VERSION_CODE must be between 1 and 2100000000."
+    }
+    require(versionName.isNotBlank()) { "APP_VERSION_NAME must not be blank." }
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
