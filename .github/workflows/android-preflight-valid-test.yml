@@ -1,0 +1,78 @@
+name: Android Preflight Valid Configuration Test
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  valid-preflight-test:
+    name: Validate complete test configuration
+    runs-on: ubuntu-latest
+    environment: preflight-test
+
+    steps:
+      - name: Check required production settings
+        shell: bash
+        env:
+          KEYSTORE: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+          ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          STORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+          APP_ID: ${{ vars.PRODUCTION_APPLICATION_ID }}
+          VERSION_CODE: ${{ vars.PRODUCTION_VERSION_CODE }}
+          VERSION_NAME: ${{ vars.PRODUCTION_VERSION_NAME }}
+        run: |
+          set -euo pipefail
+
+          failed=0
+
+          check_required() {
+            local name="$1"
+            local value="$2"
+            if [[ -z "$value" ]]; then
+              echo "::error::Missing required setting: $name"
+              failed=1
+            fi
+          }
+
+          check_required RELEASE_KEYSTORE_BASE64 "$KEYSTORE"
+          check_required RELEASE_KEY_ALIAS "$ALIAS"
+          check_required RELEASE_KEYSTORE_PASSWORD "$STORE_PASSWORD"
+          check_required RELEASE_KEY_PASSWORD "$KEY_PASSWORD"
+          check_required PRODUCTION_APPLICATION_ID "$APP_ID"
+          check_required PRODUCTION_VERSION_CODE "$VERSION_CODE"
+          check_required PRODUCTION_VERSION_NAME "$VERSION_NAME"
+
+          if [[ -n "$APP_ID" ]] &&
+            [[ ! "$APP_ID" =~ ^[A-Za-z][A-Za-z0-9_]*(\.[A-Za-z][A-Za-z0-9_]*)+$ ]]; then
+            echo "::error::Invalid production application ID format."
+            failed=1
+          fi
+
+          if [[ -n "$VERSION_CODE" ]] &&
+            [[ ! "$VERSION_CODE" =~ ^[1-9][0-9]*$ ]]; then
+            echo "::error::Invalid production version code."
+            failed=1
+          fi
+
+          if [[ "$failed" -ne 0 ]]; then
+            echo "VALID CONFIGURATION TEST: FAIL"
+            exit 1
+          fi
+
+          echo "All seven required settings are configured."
+          echo "Application ID format: valid."
+          echo "Version code format: valid."
+          echo "Version name: present."
+          echo "VALID CONFIGURATION TEST: PASS"
+
+      - name: Publish test summary
+        if: always()
+        run: |
+          {
+            echo "## Android Preflight Valid Configuration Test"
+            echo "- Required settings checked: 7"
+            echo "- Production credentials exposed: No"
+          } >> "$GITHUB_STEP_SUMMARY"

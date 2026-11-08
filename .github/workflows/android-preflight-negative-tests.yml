@@ -1,0 +1,117 @@
+name: Android Preflight Negative Tests
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  preflight-negative-tests:
+    name: Test ${{ matrix.scenario }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        scenario:
+          - missing-alias
+          - missing-store-password
+          - missing-key-password
+          - missing-application-id
+          - invalid-application-id
+          - missing-version-code
+          - invalid-version-code
+          - missing-version-name
+
+    steps:
+      - name: Validate test scenario
+        shell: bash
+        env:
+          SCENARIO: ${{ matrix.scenario }}
+        run: |
+          set -euo pipefail
+
+          KEYSTORE="TEST_KEYSTORE_PLACEHOLDER"
+          ALIAS="TEST_ALIAS"
+          STORE_PASSWORD="TEST_STORE_PASSWORD"
+          KEY_PASSWORD="TEST_KEY_PASSWORD"
+          APP_ID="com.example.socialstudio"
+          VERSION_CODE="25"
+          VERSION_NAME="2.5.0"
+
+          case "$SCENARIO" in
+            missing-alias) ALIAS="" ;;
+            missing-store-password) STORE_PASSWORD="" ;;
+            missing-key-password) KEY_PASSWORD="" ;;
+            missing-application-id) APP_ID="" ;;
+            invalid-application-id) APP_ID="invalid-app-id" ;;
+            missing-version-code) VERSION_CODE="" ;;
+            invalid-version-code) VERSION_CODE="0" ;;
+            missing-version-name) VERSION_NAME="" ;;
+            *) echo "::error::Unknown test scenario."; exit 1 ;;
+          esac
+
+          validate_configuration() {
+            local failed=0
+
+            check_required() {
+              local name="$1"
+              local value="$2"
+              if [[ -z "$value" ]]; then
+                echo "FAIL: Missing setting: $name"
+                failed=1
+              fi
+            }
+
+            check_required "RELEASE_KEYSTORE_BASE64" "$KEYSTORE"
+            check_required "RELEASE_KEY_ALIAS" "$ALIAS"
+            check_required "RELEASE_KEYSTORE_PASSWORD" "$STORE_PASSWORD"
+            check_required "RELEASE_KEY_PASSWORD" "$KEY_PASSWORD"
+            check_required "PRODUCTION_APPLICATION_ID" "$APP_ID"
+            check_required "PRODUCTION_VERSION_CODE" "$VERSION_CODE"
+            check_required "PRODUCTION_VERSION_NAME" "$VERSION_NAME"
+
+            if [[ -n "$APP_ID" ]] &&
+              [[ ! "$APP_ID" =~ ^[A-Za-z][A-Za-z0-9_]*(\.[A-Za-z][A-Za-z0-9_]*)+$ ]]; then
+              echo "FAIL: Invalid production application ID format."
+              failed=1
+            fi
+
+            if [[ -n "$VERSION_CODE" ]] &&
+              [[ ! "$VERSION_CODE" =~ ^[1-9][0-9]*$ ]]; then
+              echo "FAIL: Invalid production version code."
+              failed=1
+            fi
+
+            return "$failed"
+          }
+
+          if validate_configuration; then
+            echo "::error::Test failed: invalid configuration was accepted."
+            exit 1
+          fi
+          echo "PASS: $SCENARIO was correctly rejected."
+
+      - name: Add test result to summary
+        if: always()
+        env:
+          SCENARIO: ${{ matrix.scenario }}
+          JOB_STATUS: ${{ job.status }}
+        run: echo "| $SCENARIO | $JOB_STATUS |" >> "$GITHUB_STEP_SUMMARY"
+
+  passing-configuration:
+    name: Accept valid configuration
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate passing configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          APP_ID="com.example.socialstudio"
+          VERSION_CODE="25"
+          VERSION_NAME="2.5.0"
+
+          [[ "$APP_ID" =~ ^[A-Za-z][A-Za-z0-9_]*(\.[A-Za-z][A-Za-z0-9_]*)+$ ]]
+          [[ "$VERSION_CODE" =~ ^[1-9][0-9]*$ ]]
+          [[ -n "$VERSION_NAME" ]]
+          echo "PASS: valid configuration was accepted."

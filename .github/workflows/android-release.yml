@@ -1,0 +1,166 @@
+name: Android Release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  preflight:
+    name: Validate production release configuration
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Check required production settings
+        shell: bash
+        env:
+          KEYSTORE: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+          ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          STORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+          APP_ID: ${{ vars.PRODUCTION_APPLICATION_ID }}
+          VERSION_CODE: ${{ vars.PRODUCTION_VERSION_CODE }}
+          VERSION_NAME: ${{ vars.PRODUCTION_VERSION_NAME }}
+        run: |
+          set -euo pipefail
+          failed=0
+          check_required() {
+            local name="$1"
+            local value="$2"
+            if [[ -z "$value" ]]; then
+              echo "::error::Missing required setting: $name"
+              failed=1
+            fi
+          }
+          check_required RELEASE_KEYSTORE_BASE64 "$KEYSTORE"
+          check_required RELEASE_KEY_ALIAS "$ALIAS"
+          check_required RELEASE_KEYSTORE_PASSWORD "$STORE_PASSWORD"
+          check_required RELEASE_KEY_PASSWORD "$KEY_PASSWORD"
+          check_required PRODUCTION_APPLICATION_ID "$APP_ID"
+          check_required PRODUCTION_VERSION_CODE "$VERSION_CODE"
+          check_required PRODUCTION_VERSION_NAME "$VERSION_NAME"
+          if [[ -n "$APP_ID" ]] &&
+            [[ ! "$APP_ID" =~ ^[A-Za-z][A-Za-z0-9_]*(\.[A-Za-z][A-Za-z0-9_]*)+$ ]]; then
+            echo "::error::Invalid production application ID format."
+            failed=1
+          fi
+          if [[ -n "$VERSION_CODE" ]] &&
+            [[ ! "$VERSION_CODE" =~ ^[1-9][0-9]*$ ]]; then
+            echo "::error::Invalid production version code."
+            failed=1
+          fi
+          if [[ "$failed" -ne 0 ]]; then
+            exit 1
+          fi
+          echo "Production preflight passed."
+
+  verify-production-keystore:
+    name: Verify production keystore
+    needs: preflight
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK packages
+        run: sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+
+      - name: Verify production keystore and alias
+        shell: bash
+        env:
+          KEYSTORE_B64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+          KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          STORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          umask 077
+
+          KEYSTORE_FILE="$(mktemp "${RUNNER_TEMP}/release-keystore-XXXXXX.jks")"
+          CSR_FILE="$(mktemp "${RUNNER_TEMP}/release-check-XXXXXX.csr")"
+          cleanup() {
+            rm -f "$KEYSTORE_FILE" "$CSR_FILE"
+          }
+          trap cleanup EXIT
+
+          if [[ -z "$KEYSTORE_B64" || -z "$KEY_ALIAS" ||
+            -z "$STORE_PASSWORD" || -z "$KEY_PASSWORD" ]]; then
+            echo "::error::Required signing configuration is missing."
+            exit 1
+          fi
+
+          if ! printf '%s' "$KEYSTORE_B64" |
+            base64 --decode > "$KEYSTORE_FILE" 2>/dev/null; then
+            echo "::error::Keystore Base64 decoding failed."
+            exit 1
+          fi
+          if [[ ! -s "$KEYSTORE_FILE" ]]; then
+            echo "::error::Decoded keystore file is empty."
+            exit 1
+          fi
+
+          if ! keytool -list \
+            -keystore "$KEYSTORE_FILE" \
+            -storepass:env STORE_PASSWORD \
+            -alias "$KEY_ALIAS" \
+            > /dev/null 2>&1; then
+            echo "::error::Keystore verification failed. Check the keystore, store password, and alias."
+            exit 1
+          fi
+
+          echo "PASS: Keystore decoded successfully."
+          echo "PASS: Store password and alias verified."
+          if ! keytool -certreq \
+            -keystore "$KEYSTORE_FILE" \
+            -storepass:env STORE_PASSWORD \
+            -keypass:env KEY_PASSWORD \
+            -alias "$KEY_ALIAS" \
+            -file "$CSR_FILE" > /dev/null 2>&1; then
+            echo "::error::Private-key password verification failed."
+            exit 1
+          fi
+          echo "PASS: Private-key password verified."
+          {
+            echo "RELEASE_KEYSTORE_PATH=$KEYSTORE_FILE"
+          } >> "$GITHUB_ENV"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build signed production bundle
+        env:
+          RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+        run: ./gradlew bundleRelease
+
+      - name: Verify signed production bundle
+        run: jarsigner -verify -strict app/build/outputs/bundle/release/app-release.aab
+
+      - name: Upload production bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: social-midei-studio-release
+          path: app/build/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Remove temporary keystore
+        if: always()
+        run: |
+          set -euo pipefail
+          if [[ -n "${RELEASE_KEYSTORE_PATH:-}" ]]; then
+            rm -f "$RELEASE_KEYSTORE_PATH"
+            echo "Temporary keystore cleanup completed."
+          fi
