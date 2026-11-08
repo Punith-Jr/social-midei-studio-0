@@ -154,4 +154,68 @@ router.post('/auth', (req, res) => {
   });
 });
 
+// POST /api/sync/chatgpt/plan — keep the OpenAI API key on the server.
+router.post('/chatgpt/plan', async (req, res) => {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    return res.status(503).json({ message: 'ChatGPT planning is not configured. Set OPENAI_API_KEY in the backend environment.' });
+  }
+
+  const goal = typeof req.body?.goal === 'string' ? req.body.goal.trim().slice(0, 1000) : '';
+  const tasks = Array.isArray(req.body?.tasks)
+    ? req.body.tasks.filter(task => typeof task === 'string').slice(0, 30).map(task => task.slice(0, 200))
+    : [];
+  if (!goal) return res.status(400).json({ message: 'Describe a goal to create a task plan.' });
+
+  try {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
+        temperature: 0.4,
+        response_format: { type: 'json_object' },
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a practical task-planning assistant. Break the user goal into 3 to 8 concise, specific, actionable task titles. Avoid duplicating existing active tasks. Return only a JSON object with a "suggestions" property containing an array of strings. Do not include markdown.'
+          },
+          {
+            role: 'user',
+            content: JSON.stringify({ goal, existingActiveTasks: tasks })
+          }
+        ]
+      })
+    });
+
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      console.error('OpenAI task planner request failed:', response.status, data.error?.type || 'unknown error');
+      const status = response.status === 401 ? 503 : 502;
+      return res.status(status).json({
+        message: response.status === 401
+          ? 'The configured OpenAI API key was rejected. Check OPENAI_API_KEY on the backend.'
+          : 'OpenAI could not create a plan right now. Please try again.'
+      });
+    }
+
+    let plan;
+    try {
+      plan = JSON.parse(data.choices?.[0]?.message?.content || '{}');
+    } catch {
+      return res.status(502).json({ message: 'The AI returned an unreadable plan. Please try again.' });
+    }
+    const suggestions = Array.isArray(plan.suggestions)
+      ? [...new Set(plan.suggestions.filter(item => typeof item === 'string').map(item => item.trim()).filter(Boolean))].slice(0, 8).map(item => item.slice(0, 200))
+      : [];
+    return res.json({ suggestions });
+  } catch (error) {
+    console.error('OpenAI task planner unavailable:', error.message);
+    return res.status(502).json({ message: 'Could not reach OpenAI. Check the backend connection and try again.' });
+  }
+});
+
 export default router;
